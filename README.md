@@ -1,3 +1,11 @@
+---
+title: JyotishMCP
+emoji: 🪐
+colorFrom: purple
+colorTo: indigo
+sdk: docker
+pinned: false
+---
 # 🔭 AstroConsultant — AI Astrology Consultant System
 
 Professional-grade astrology API powered by **Swiss Ephemeris** (`pyswisseph`), supporting both **Western (Tropical)** and **Vedic/Jyotish (Sidereal)** traditions.

@@ -115,6 +115,22 @@ app.include_router(western.router)
 app.include_router(fixed_stars.router)
 app.include_router(utilities.router)
 
+# ── Mount FastMCP for SSE (ChatGPT, Remote Clients) ──────────────────────
+# This exposes /mcp/sse and /mcp/messages endpoints for ChatGPT to consume
+import sys
+import importlib.util
+from pathlib import Path
+
+_mcp_path = Path(__file__).parent.parent / "mcp" / "server.py"
+_spec = importlib.util.spec_from_file_location("local_mcp_server", str(_mcp_path))
+_local_mcp = importlib.util.module_from_spec(_spec)
+sys.modules["local_mcp_server"] = _local_mcp
+_spec.loader.exec_module(_local_mcp)
+
+# Mount the MCP server as an SSE application at /mcp
+# This gives ChatGPT access at https://[your_host]/mcp/sse
+app.mount("/mcp", _local_mcp.mcp.http_app(transport="sse"))
+
 
 # ── Root Endpoint ────────────────────────────────────────────────────────
 @app.get("/")

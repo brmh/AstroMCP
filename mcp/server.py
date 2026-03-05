@@ -9,7 +9,9 @@ from typing import Optional
 from fastmcp import FastMCP
 import httpx
 
-API_BASE_URL = os.getenv("MCP_FASTAPI_BASE_URL", "http://localhost:8000")
+# Use the PORT environment variable if available, defaulting to 8000 for local dev
+_port = os.getenv("PORT", "8000")
+API_BASE_URL = os.getenv("MCP_FASTAPI_BASE_URL", f"http://127.0.0.1:{_port}")
 
 mcp = FastMCP(name="AstroConsultant", version="1.0.0")
 client = httpx.AsyncClient(base_url=API_BASE_URL, timeout=30.0)

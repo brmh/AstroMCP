@@ -1,0 +1,31 @@
+# Core
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.7.0
+pydantic-settings>=2.3.0
+python-dotenv>=1.0.0
+
+# Swiss Ephemeris
+pyswisseph>=2.10.3.2
+
+# MCP Server
+fastmcp>=2.1.0
+mcp>=1.0.0
+
+# Geo/Timezone utilities
+geopy>=2.4.1
+timezonefinder>=6.5.2
+pytz>=2024.1
+
+# HTTP client (for MCP calling FastAPI)
+httpx>=0.27.0
+
+# Caching
+cachetools>=5.3.3
+
+# Logging
+structlog>=24.2.0
+
+# Date/time
+python-dateutil>=2.9.0
+ephem>=4.1.5

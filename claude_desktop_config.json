@@ -1,0 +1,25 @@
+{
+    "mcpServers": {
+        "astro-consultant": {
+            "command": "python",
+            "args": [
+                "mcp/server.py"
+            ],
+            "env": {
+                "MCP_FASTAPI_BASE_URL": "http://localhost:8000",
+                "EPHE_PATH": "./ephe"
+            },
+            "_comment": "Alternative: use 'uv' command below instead of 'python'",
+            "_uv_command": "uv",
+            "_uv_args": [
+                "run",
+                "--with",
+                "fastmcp",
+                "--with",
+                "httpx",
+                "python",
+                "mcp/server.py"
+            ]
+        }
+    }
+}

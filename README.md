@@ -209,4 +209,8 @@ python scripts/test_calculations.py
 ## License
 
 This project uses **pyswisseph** which is licensed under **AGPL**. Please review the [Swiss Ephemeris license](https://www.astro.com/swisseph/) for commercial use requirements.
+
+---
+
+*Created by Team Magicmond*
 # AstroMCP

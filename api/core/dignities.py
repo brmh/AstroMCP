@@ -44,6 +44,21 @@ TERMS = {
 }
 
 
+def get_basic_dignity(planet: str, sign: str) -> str:
+    """Return a simple string summarizing the basic dignity of a planet in a sign."""
+    p = planet.lower()
+    if p in EXALTATION and EXALTATION[p][0] == sign:
+        return "Exalted"
+    if p in MOOLATRIKONA and MOOLATRIKONA[p][0] == sign:
+        return "Moolatrikona"
+    if p in DOMICILE and sign in DOMICILE[p]:
+        return "Own Sign"
+    if p in FALL and sign == FALL[p]:
+        return "Debilitated (Fall)"
+    if p in DETRIMENT and sign == DETRIMENT[p]:
+        return "Detriment"
+    return "Neutral/Enemy/Friend (requires deeper dignity check)"
+
 def get_essential_dignities(positions: Dict) -> Dict[str, Dict]:
     """Calculate essential dignities for all planets."""
     results = {}

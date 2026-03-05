@@ -56,6 +56,21 @@ async def julian_day(request: JulianDayRequest):
     jd = get_julian_day(request.year, request.month, request.day, request.hour, request.minute, request.second, request.timezone)
     return {"julian_day": jd}
 
+from api.models.request_models import PanchangRequest
+from api.core.planetary_hours import get_planetary_hours
+
+@router.post("/planetary-hours")
+async def planetary_hours(request: PanchangRequest):
+    jd = get_julian_day(request.year, request.month, request.day, request.hour, request.minute, 0, request.timezone)
+    return get_planetary_hours(jd, request.latitude, request.longitude)
+
+
+from api.core.nakshatras import get_nakshatra_info
+
+@router.get("/nakshatra/{number}")
+async def nakshatra_deep_dive(number: int):
+    return get_nakshatra_info(number)
+
 
 @router.get("/ephemeris-range")
 async def ephemeris_range():

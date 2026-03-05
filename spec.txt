@@ -1,0 +1,794 @@
+
+
+
+
+🪐
+
+Astro-Consultant MCP
+Professional Expansion — Developer Specification
+─────────────────────────────────────────
+
+Prepared for: Google Antigravity / MCP Engineering Team
+Version: 2.0 — Full Professional Suite
+Date: March 2026
+
+
+
+
+
+1. Project Overview
+This document provides a complete technical specification for expanding the Astro-Consultant MCP (Model Context Protocol) server from its current capability set to a full professional-grade astrology platform suitable for use by practising Jyotishis (Vedic astrologers), Western astrologers, and hybrid practitioners.
+The current MCP exposes 19 tools covering natal charts, dashas, yogas, doshas, transits, Ashtakavarga, Shadbala, Panchang, and a few utility functions. While this is a solid foundation, professional astrologers require significantly deeper analytical capability — particularly around divisional (Varga) charts, advanced predictive systems, Jaimini techniques, remedial astrology, and Western prognostication methods.
+1.1 Current Tool Inventory
+Total Tools
+19 tools currently available
+Vedic Coverage
+Kundli, Dasha (Vimshottari), Yogas, Doshas, Ashtakavarga, Shadbala, Panchang, Muhurta, Transits, Compatibility (Ashtakoot), Synastry
+Western Coverage
+Natal Chart (Tropical), Solar Return, Arabic Parts, Synastry
+Utility Tools
+Geocode, Moon Phase, Current Positions, Find Auspicious Time
+Key Gaps
+Divisional Charts (D2–D60), Jaimini system, Sade Sati, Progressed Charts, Composite Charts, Remedies Engine, Sarvashtakavarga analysis, Bhava Chalit
+Target Version
+v2.0 — Professional Suite (39 new tools proposed)
+
+
+2. High Priority — Vedic Additions
+These tools are used in virtually every professional Vedic reading and should be treated as critical path items. No professional Jyotishi can deliver a complete consultation without these.
+2.1 Divisional (Varga) Charts
+Divisional charts are sub-divisions of the natal chart that reveal specific life domains in granular detail. The D9 (Navamsa) is considered equally important to the natal chart by most Vedic astrologers. Professional readings without Varga charts are considered incomplete.
+Tool: get_varga_chart
+Tool Name
+Key Parameters
+Returns
+Priority
+get_varga_chart
+birth_day, birth_month, birth_year, birth_hour, birth_minute, lat, lon, timezone, division (D2–D60), ayanamsa?
+Full divisional chart with planetary positions, house lords, and dignity analysis
+🔴 Critical
+
+The division parameter must support the following standard Varga charts:
+Field
+Type
+Required
+Description
+D1
+Rasi
+Existing
+Natal chart — already implemented
+D2
+Hora
+✅ New
+Wealth, financial capacity
+D3
+Drekkana
+✅ New
+Siblings, courage, communication
+D4
+Chaturthamsa
+✅ New
+Property, fixed assets, fortune
+D7
+Saptamsa
+✅ New
+Children, progeny, creativity
+D9
+Navamsa
+🔴 URGENT
+Marriage, dharma, soul path — most critical divisional chart
+D10
+Dasamsa
+✅ New
+Career, profession, public life, name & fame
+D12
+Dwadasamsa
+✅ New
+Parents, ancestry, past life karma
+D16
+Shodasamsa
+✅ New
+Vehicles, comforts, conveyances
+D20
+Vimsamsa
+✅ New
+Spiritual progress, worship, upasana
+D24
+Chaturvimsamsa
+✅ New
+Education, learning, knowledge
+D27
+Bhamsa
+✅ New
+Strength, vitality, physical capability
+D30
+Trimsamsa
+✅ New
+Evils, misfortunes, disease susceptibility
+D40
+Khavedamsa
+✅ New
+Auspicious and inauspicious effects
+D45
+Akshavedamsa
+✅ New
+Character, conduct, general nature
+D60
+Shashtiamsa
+✅ New
+Past karma, deepest karmic blueprint
+
+Response Schema for get_varga_chart
+{
+  "division": "D9",
+  "division_name": "Navamsa",
+  "domain": "Marriage, dharma, soul path",
+  "planets": {
+    "sun": { "sign": "Aries", "house": 1, "dignity": "Exalted", "is_vargottama": false },
+    "moon": { ... },
+    ...
+  },
+  "lagna": { "sign": "Aries", "degree": 12.45 },
+  "house_lords": { "house_1": "Mars", "house_2": "Venus", ... },
+  "vargottama_planets": ["jupiter"],
+  "atmakaraka": { "planet": "sun", "degree": 28.4 },
+  "summary": "Navamsa Lagna in Aries with exalted Sun..."
+}
+
+2.2 Sade Sati Calculator
+Sade Sati is Saturn's 7.5-year transit through the sign before, the sign of, and the sign after the natal Moon. It is one of the most asked-about topics by clients in Vedic astrology. The current MCP has no Sade Sati tool.
+Tool: get_sade_sati
+Tool Name
+Key Parameters
+Returns
+Priority
+get_sade_sati
+birth_day, birth_month, birth_year, birth_hour, birth_minute, lat, lon, timezone
+All past and future Sade Sati periods, current phase, peak intensity dates, and remedies
+🔴 Critical
+
+{
+  "natal_moon_sign": "Aries",
+  "is_currently_in_sade_sati": true,
+  "current_phase": "Rising (1st phase)",
+  "current_saturn_sign": "Pisces",
+  "phases": [
+    { "phase": "Rising", "saturn_sign": "Pisces", "start": "2025-03-29", "end": "2027-06-03", "intensity": "Moderate" },
+    { "phase": "Peak",   "saturn_sign": "Aries",  "start": "2027-06-03", "end": "2029-10-20", "intensity": "High" },
+    { "phase": "Setting","saturn_sign": "Taurus", "start": "2029-10-20", "end": "2032-01-15", "intensity": "Moderate" }
+  ],
+  "all_periods": [ ... historical and future periods ... ],
+  "small_panoti": { "active": false, "details": "..." },
+  "ashtama_shani": { "active": false, "details": "..." },
+  "remedies": ["Worship Shani Dev every Saturday", "Chant Shani mantra: Om Sham Shanicharaya Namah", "Donate sesame seeds, black cloth, iron on Saturdays"]
+}
+
+2.3 Bhava Chalit Chart
+The Bhava Chalit chart shows the actual house position of planets when using unequal (Sripati or Placidus-style) house cusps, as opposed to whole-sign houses. Many classical Vedic texts use this for precise house analysis. Planets may shift to an adjacent house in the Chalit chart vs the Rasi chart, which significantly changes interpretation.
+Tool: get_bhava_chalit
+Tool Name
+Key Parameters
+Returns
+Priority
+get_bhava_chalit
+birth_day, birth_month, birth_year, birth_hour, birth_minute, lat, lon, timezone, house_system? (Sripati/Placidus)
+Bhava Chalit chart with shifted house positions and comparison to Rasi placements
+🔴 High
+
+2.4 Upagraha (Shadow Planet) Positions
+Upagrahas are sensitive mathematical points — not physical planets — that are used in traditional Vedic readings. Gulika (son of Saturn) and Mandi are the most important. They indicate areas of suffering, obstacles, and hidden dangers.
+Tool: get_upagrahas
+Tool Name
+Key Parameters
+Returns
+Priority
+get_upagrahas
+birth_day, birth_month, birth_year, birth_hour, birth_minute, lat, lon, timezone
+Positions of Gulika, Mandi, Dhuma, Vyatipata, Parivesha, Indrachapa, Upaketu with house placements and effects
+🔴 High
+
+
+3. Jaimini Astrology System
+Jaimini is a distinct and complete system of Vedic astrology, parallel to the Parashari system. It uses its own Karakas (significators), Chara Dasha, Rasi aspects, and Pada (Arudha) system. A growing number of professional astrologers — especially in South India and among international practitioners — rely heavily on Jaimini techniques.
+3.1 Karakas & Atmakaraka
+Tool: get_jaimini_karakas
+Tool Name
+Key Parameters
+Returns
+Priority
+get_jaimini_karakas
+birth_day, birth_month, birth_year, birth_hour, birth_minute, lat, lon, timezone
+All 7 (or 8) Chara Karakas with planet assignments, degrees, and life-domain interpretations
+🟠 High
+
+Field
+Type
+Required
+Description
+Atmakaraka (AK)
+Planet
+✅
+Soul significator — highest degree planet. Most important Jaimini point.
+Amatyakaraka (AmK)
+Planet
+✅
+Career, minister, support in career
+Bhratrukaraka (BK)
+Planet
+✅
+Siblings, courage
+Matrukaraka (MK)
+Planet
+✅
+Mother, education, mind
+Pitrukaraka (PK)
+Planet
+✅
+Father, guru, blessings
+Putrakaraka (PuK)
+Planet
+✅
+Children, intelligence
+Gnatikaraka (GK)
+Planet
+✅
+Enemies, disease, competition
+Darakaraka (DK)
+Planet
+✅
+Spouse, partnerships (lowest degree)
+
+3.2 Chara Dasha
+Tool: get_chara_dasha
+Tool Name
+Key Parameters
+Returns
+Priority
+get_chara_dasha
+birth_day, birth_month, birth_year, birth_hour, birth_minute, lat, lon, timezone
+Full Chara Dasha timeline by Rasi (sign), with current period and sub-periods
+🟠 High
+get_current_chara_dasha
+Same as above
+Currently active Chara Mahadasha, Antardasha, and Pratyantardasha with remaining time
+🟠 High
+
+3.3 Arudha Padas
+Tool: get_arudha_padas
+Tool Name
+Key Parameters
+Returns
+Priority
+get_arudha_padas
+birth_day, birth_month, birth_year, birth_hour, birth_minute, lat, lon, timezone
+All 12 Arudha Padas (AL, A2–A12) with sign placements and interpretations
+🟠 Medium
+
+Key Arudha Padas to include:
+	•	AL (Arudha Lagna) — public image, worldly perception, how others see you
+	•	A7 (Darapada) — marriage, partnerships, business associations
+	•	A10 (Rajyapada) — career, profession, status in public life
+	•	A11 (Labha Pada) — gains, income, fulfilment of desires
+
+3.4 Karakamsa
+Tool: get_karakamsa
+Tool Name
+Key Parameters
+Returns
+Priority
+get_karakamsa
+birth_day, birth_month, birth_year, birth_hour, birth_minute, lat, lon, timezone
+Karakamsa Lagna (Atmakaraka sign in Navamsa), Swamsa, and soul-level life theme analysis
+🟠 Medium
+
+
+4. Additional Dasha Systems
+The current MCP implements only Vimshottari Dasha. Professional astrologers use multiple dasha systems concurrently to triangulate predictions and find corroborating periods.
+4.1 Yogini Dasha
+Yogini Dasha is a 36-year cycle using 8 Yoginis (Mangala, Pingala, Dhanya, Bhramari, Bhadrika, Ulka, Siddha, Sankata). It is very popular in North India and among traditional Vedic practitioners.
+Tool Name
+Key Parameters
+Returns
+Priority
+get_yogini_dasha
+birth_day, birth_month, birth_year, birth_hour, birth_minute, lat, lon, timezone
+Full Yogini Dasha timeline with all 8 Yoginis and sub-periods
+🟠 High
+get_current_yogini_dasha
+Same as above
+Current Yogini Mahadasha and Antardasha with planet ruler, nature, and effects
+🟠 High
+
+4.2 Kalachakra Dasha
+An ancient and complex dasha system that divides the zodiac into four groups and uses the birth Nakshatra pada to determine the sequence. Used for long-term life mapping.
+Tool Name
+Key Parameters
+Returns
+Priority
+get_kalachakra_dasha
+birth_day, birth_month, birth_year, birth_hour, birth_minute, lat, lon, timezone
+Kalachakra Dasha timeline with Deha and Jeeva signs
+🟡 Medium
+
+4.3 Dasha Interpretations
+Currently the MCP returns Dasha periods with no interpretation. Professional astrologers need contextual analysis per period.
+Tool Name
+Key Parameters
+Returns
+Priority
+get_dasha_interpretation
+mahadasha_lord, antardasha_lord, natal_chart_data, purpose? (career/marriage/health/finance)
+Detailed text interpretation of the dasha period based on house lordships, placements, and yogas in the natal chart
+🟠 High
+
+
+5. Enhanced Transit & Predictive Tools
+5.1 Gochar Transit Report
+The current get_current_transits tool returns a raw snapshot of transit positions vs natal positions. What is needed is an interpreted report showing which natal houses are being activated, what the likely effects are, and a timeline of upcoming significant transit events.
+Tool Name
+Key Parameters
+Returns
+Priority
+get_gochar_report
+birth_day, birth_month, birth_year, birth_hour, birth_minute, lat, lon, timezone, report_months? (default 12)
+Month-by-month transit predictions showing key transits over natal houses, dates of ingress/egress, and interpreted effects by life domain
+🔴 High
+
+5.2 Eclipse Impact Analysis
+Tool Name
+Key Parameters
+Returns
+Priority
+get_eclipse_impacts
+birth_day, birth_month, birth_year, birth_hour, birth_minute, lat, lon, timezone, years_ahead? (default 2)
+All upcoming solar and lunar eclipses, which natal houses they activate, and predicted areas of life impact
+🟠 High
+
+5.3 Planetary Stations & Retrogrades
+Tool Name
+Key Parameters
+Returns
+Priority
+get_retrograde_calendar
+year, lat?, lon?
+All planetary retrograde periods for the year, their natal house impact, and recommended caution periods
+🟡 Medium
+
+5.4 Varshaphal (Tajika Annual Horoscope)
+The Vedic annual horoscope system — distinct from the Western Solar Return — includes Muntha calculation, Year Lord (Varshesha), Tri-Pataki Chakra, and Saham (Arabic Part equivalents in Tajika). This is heavily used in North Indian astrology.
+Tool Name
+Key Parameters
+Returns
+Priority
+get_varshaphal
+birth_day, birth_month, birth_year, birth_hour, birth_minute, lat, lon, timezone, target_year
+Varshaphal chart, Muntha position, Varshesha (Year Lord), Yogas specific to the year, and annual predictions by house
+🟠 High
+
+
+6. Western Astrology Additions
+6.1 Secondary Progressions
+Secondary progressions use the formula of one day of planetary motion = one year of life. This is one of the most widely used predictive techniques in Western astrology. A progressed chart shows the "evolved" natal chart and is used alongside transits for prediction.
+Tool Name
+Key Parameters
+Returns
+Priority
+get_progressed_chart
+birth_day, birth_month, birth_year, birth_hour, birth_minute, lat, lon, timezone, target_year (age to progress to)
+Progressed planetary positions, progressed Ascendant and MC, progressed aspects, and key progressed events for the year
+🟠 High
+
+6.2 Composite Chart
+A composite chart merges two birth charts by finding the midpoints of each planet pair. It represents the relationship itself as an entity. Essential for professional relationship astrology consultations.
+Tool Name
+Key Parameters
+Returns
+Priority
+get_composite_chart
+p1_birth_data (full), p2_birth_data (full)
+Composite planetary positions, houses, aspects, and relationship theme analysis
+🟠 High
+
+6.3 Asteroid Positions
+The four major asteroids — Chiron, Juno, Pallas, Vesta, Ceres — are now standard in professional Western readings. Chiron especially (the "wounded healer") is deeply embedded in modern astrological practice.
+Tool Name
+Key Parameters
+Returns
+Priority
+get_asteroids
+birth_day, birth_month, birth_year, birth_hour, birth_minute, lat, lon, timezone
+Positions of Chiron, Juno, Pallas, Vesta, Ceres with sign, house, degree, aspects to natal planets, and standard interpretations
+🟡 Medium
+
+6.4 Midpoints
+Midpoint analysis is the cornerstone of Uranian astrology and cosmobiology. The midpoint of two planets is a sensitive point that activates when transited or when a third planet sits there natally.
+Tool Name
+Key Parameters
+Returns
+Priority
+get_midpoints
+birth_day, birth_month, birth_year, birth_hour, birth_minute, lat, lon, timezone, orb? (default 1.5)
+All significant planetary midpoints with current transit activations
+🟡 Low
+
+
+7. Remedial Astrology Engine
+This is potentially the highest-value addition for Indian clients. Every professional Jyotishi provides remedies. Automating this based on chart analysis would make this MCP uniquely powerful.
+7.1 Comprehensive Remedy Tool
+Tool Name
+Key Parameters
+Returns
+Priority
+get_remedies
+natal_chart_data (from get_vedic_kundli), focus? (general/marriage/career/health/finance)
+Personalised remedies based on weak planets, doshas, current dasha, and house analysis
+🔴 High
+
+The remedy engine should return the following remedy categories based on chart analysis:
+Field
+Type
+Required
+Description
+gemstones
+Array
+✅
+Recommended gemstones with planet association, which finger to wear, metal, day to start, and weight (carats)
+mantras
+Array
+✅
+Planet-specific mantras with repetition count (108/1008), best day, and best time
+donations
+Array
+✅
+Dana (charity) items associated with weak/afflicted planets — day, time, recipient
+fasting
+Array
+✅
+Vrat (fasting) days linked to planet rulers
+puja
+Array
+✅
+Deity-specific rituals (Navagraha puja, Rudra Abhishek, Saraswati puja, etc.)
+yantra
+Array
+✅
+Yantras to install for afflicted planets with activation instructions
+lifestyle
+Array
+✅
+Practical lifestyle recommendations (colours to wear, directions to face, foods to eat/avoid)
+rationale
+String
+✅
+Clear explanation of why each remedy is prescribed, based on the chart
+
+7.2 Gemstone Recommendation Tool
+Many clients come specifically for gemstone advice. A dedicated, detailed tool for this is warranted.
+Tool Name
+Key Parameters
+Returns
+Priority
+get_gemstone_recommendations
+natal_chart_data, purpose? (general/career/marriage/health)
+Primary and secondary gemstone recommendations with full wearing protocol
+🟠 High
+
+
+8. Utility & Configuration Enhancements
+8.1 Ayanamsa Switcher
+Different schools of Vedic astrology use different ayanamsas. The current MCP defaults to Lahiri. Professional astrologers — particularly KP (Krishnamurti Paddhati) practitioners — need to switch ayanamsas.
+Ayanamsas to support:
+	•	Lahiri (Chitrapaksha) — default, most common in India
+	•	Raman — used by B.V. Raman school
+	•	Krishnamurti (KP) — mandatory for KP astrologers
+	•	Yukteshwar — based on The Holy Science
+	•	True Chitra — sideral with fixed star Spica
+	•	Fagan/Bradley — Western sidereal
+	•	Suryasiddhanta — classical Vedic
+
+// The ayanamsa parameter already exists on some tools.
+// Standardise it across ALL tools and add validation:
+{
+  "ayanamsa": "LAHIRI" | "RAMAN" | "KP" | "YUKTESHWAR" | "TRUE_CHITRA" | "FAGAN_BRADLEY" | "SURYASIDDHANTA"
+}
+
+8.2 Hora Chart for the Day
+Tool Name
+Key Parameters
+Returns
+Priority
+get_hora
+date, lat, lon, timezone
+Planetary hour (Hora) schedule for the day from sunrise to sunrise, with ruling planet and auspiciousness for different activities
+🟡 Medium
+get_current_hora
+lat, lon, timezone
+Currently active Hora (planetary hour), ruling planet, and recommended/discouraged activities
+🟡 Medium
+
+8.3 Sarvashtakavarga Interpretation
+The current get_ashtakavarga tool returns raw Sarvashtakavarga points per house. A professional tool should add interpretation, transit scoring, and identification of best/worst periods for planetary transits.
+Tool Name
+Key Parameters
+Returns
+Priority
+get_transit_scoring
+natal_chart_data, transit_planet, from_date, to_date
+Ashtakavarga-based transit quality score for each sign the transit planet passes through, with best and worst periods
+🟠 High
+
+8.4 Lagna Lord Analysis
+Tool Name
+Key Parameters
+Returns
+Priority
+get_lagna_lord_analysis
+natal_chart_data
+Complete analysis of the Lagna lord — its placement, dignity, house lordships, aspects received, conjunctions, and life-theme interpretation
+🟠 High
+
+8.5 Nakshatra Deep Dive
+Tool Name
+Key Parameters
+Returns
+Priority
+get_nakshatra_analysis
+planet? or longitude
+Full Nakshatra profile including Gana, Varna, Yoni, Gotra, Dosha, Tatwa, deity, symbol, and compatibility implications
+🟡 Medium
+
+
+9. Complete Proposed Tool Inventory
+Summary of all 39 new tools proposed in this specification, organised by category and priority.
+Category A — Divisional Charts (Varga)
+Tool Name
+Key Parameters
+Returns
+Priority
+get_varga_chart
+birth data + division (D2–D60)
+Full divisional chart
+🔴
+get_navamsa_analysis
+birth data
+D9 chart with marriage analysis
+🔴
+get_dasamsa_analysis
+birth data
+D10 chart with career analysis
+🔴
+get_bhava_chalit
+birth data
+Bhava Chalit chart
+🔴
+
+Category B — Jaimini System
+Tool Name
+Key Parameters
+Returns
+Priority
+get_jaimini_karakas
+birth data
+All 7-8 Chara Karakas
+🟠
+get_chara_dasha
+birth data
+Full Chara Dasha timeline
+🟠
+get_current_chara_dasha
+birth data
+Current Chara period
+🟠
+get_arudha_padas
+birth data
+All 12 Arudha Padas
+🟠
+get_karakamsa
+birth data
+Karakamsa & Swamsa analysis
+🟠
+
+Category C — Predictive & Transit
+Tool Name
+Key Parameters
+Returns
+Priority
+get_sade_sati
+birth data
+Full Sade Sati analysis
+🔴
+get_gochar_report
+birth data
+Month-by-month transit report
+🔴
+get_varshaphal
+birth data + year
+Tajika annual horoscope
+🟠
+get_eclipse_impacts
+birth data
+Eclipse impact on natal chart
+🟠
+get_dasha_interpretation
+dasha + chart
+Interpreted dasha text
+🟠
+get_retrograde_calendar
+year + chart
+Retrograde impact calendar
+🟡
+get_transit_scoring
+chart + planet
+Ashtakavarga transit scores
+🟠
+
+Category D — Additional Dasha Systems
+Tool Name
+Key Parameters
+Returns
+Priority
+get_yogini_dasha
+birth data
+Full Yogini Dasha timeline
+🟠
+get_current_yogini_dasha
+birth data
+Current Yogini period
+🟠
+get_kalachakra_dasha
+birth data
+Kalachakra Dasha timeline
+🟡
+
+Category E — Western Additions
+Tool Name
+Key Parameters
+Returns
+Priority
+get_progressed_chart
+birth data + year
+Secondary progressed chart
+🟠
+get_composite_chart
+two birth datasets
+Composite relationship chart
+🟠
+get_asteroids
+birth data
+Major asteroid positions
+🟡
+get_midpoints
+birth data
+Planetary midpoints
+🟡
+
+Category F — Remedial Astrology
+Tool Name
+Key Parameters
+Returns
+Priority
+get_remedies
+natal chart data + focus
+Full personalised remedy plan
+🔴
+get_gemstone_recommendations
+natal chart data
+Gemstone protocol with details
+🟠
+get_mantra_recommendations
+natal chart data
+Planet mantras and protocols
+🟠
+
+Category G — Utility & Depth Tools
+Tool Name
+Key Parameters
+Returns
+Priority
+get_upagrahas
+birth data
+Shadow planet positions
+🔴
+get_lagna_lord_analysis
+chart data
+Lagna lord full analysis
+🟠
+get_hora
+date + loc
+Planetary hour schedule
+🟡
+get_current_hora
+location
+Current planetary hour
+🟡
+get_nakshatra_analysis
+planet/lon
+Deep Nakshatra profile
+🟡
+get_yogini_dasha
+birth data
+Yogini Dasha timeline
+🟠
+
+
+10. Implementation Notes & Standards
+10.1 Standard Birth Data Object
+All tools that accept birth data should accept a consistent parameter schema. Recommend defining a standard BirthData object that can be reused across all tool signatures:
+// Standard BirthData Parameters (apply to all tools)
+{
+  "birth_day":    integer,   // 1–31
+  "birth_month":  integer,   // 1–12
+  "birth_year":   integer,   // e.g. 1997
+  "birth_hour":   integer,   // 0–23 (24hr format)
+  "birth_minute": integer,   // 0–59
+  "latitude":     float,     // e.g. 27.553
+  "longitude":    float,     // e.g. 76.634
+  "timezone":     string,    // IANA format: "Asia/Kolkata"
+  "name":         string,    // Person's name or identifier
+  "ayanamsa":     string?    // Optional: LAHIRI (default), KP, RAMAN, etc.
+}
+
+10.2 Consistent Response Envelope
+All tool responses should include a standard metadata envelope for debugging and auditability:
+{
+  "tool": "get_varga_chart",
+  "version": "2.0",
+  "ayanamsa_used": "LAHIRI",
+  "ayanamsa_degrees": 23.8189,
+  "computation_time_ms": 42,
+  "data": { ... actual response ... }
+}
+
+10.3 Error Handling
+All tools must return structured errors — never raw HTTP errors or HTML pages (the current implementation returns HTML 404 pages on failure, which is not parseable by AI clients):
+// Error response format
+{
+  "error": true,
+  "error_code": "INVALID_BIRTH_DATA",
+  "error_message": "birth_hour must be between 0 and 23",
+  "tool": "get_varga_chart"
+}
+
+10.4 Priority Roadmap
+Field
+Type
+Required
+Description
+Phase 1 (Month 1–2)
+Critical
+🔴
+Divisional Charts (D9 priority), Sade Sati, Bhava Chalit, Upagrahas, Remedies Engine, Gochar Report
+Phase 2 (Month 3–4)
+High
+🟠
+Jaimini Karakas, Chara Dasha, Arudha Padas, Yogini Dasha, Varshaphal, Progressed Chart, Composite Chart, Gemstone Tool
+Phase 3 (Month 5–6)
+Medium
+🟡
+Asteroids, Midpoints, Hora, Nakshatra Analysis, Kalachakra Dasha, Eclipse Impacts, Retrograde Calendar
+Phase 4 (Ongoing)
+Polish
+✨
+Ayanamsa switcher standardisation, Dasha interpretations engine, Error handling overhaul, Response envelope standardisation
+
+
+11. Summary
+The current Astro-Consultant MCP is a strong foundation with 19 well-implemented tools. The 39 additions proposed in this specification will transform it into a platform capable of supporting full professional consultations across both Vedic and Western astrology traditions.
+Current State
+After Phase 1–2
+After Phase 3–4
+19 tools
+~40 tools
+~58 tools
+Surface-level Vedic
+Professional Vedic
+Full Hybrid Platform
+No remedies
+Full remedy engine
+AI-interpreted remedies
+No Jaimini
+Core Jaimini
+Full Jaimini suite
+
+
+End of Specification Document

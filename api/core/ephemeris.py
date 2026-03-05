@@ -148,6 +148,7 @@ HOUSE_SYSTEMS = {
     "CAMPANUS": b'C',
     "REGIOMONTANUS": b'R',
     "PORPHYRY": b'O',
+    "SRIPATI": b'O',
     "ALCABITIUS": b'B',
     "MORINUS": b'M',
     "MERIDIAN": b'X',

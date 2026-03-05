@@ -6,7 +6,7 @@
                 "mcp/server.py"
             ],
             "env": {
-                "MCP_FASTAPI_BASE_URL": "http://localhost:8000",
+                "MCP_FASTAPI_BASE_URL": "https://ciirag-jyotishmcp.hf.space",
                 "EPHE_PATH": "./ephe"
             },
             "_comment": "Alternative: use 'uv' command below instead of 'python'",

@@ -275,14 +275,6 @@ async def get_doshas(name: str, birth_year: int, birth_month: int, birth_day: in
                        birth_hour, birth_minute, latitude, longitude, timezone, "WHOLE_SIGN", "SIDEREAL", ayanamsa))
 
 @mcp.tool
-async def get_remedies(name: str, birth_year: int, birth_month: int, birth_day: int,
-                       birth_hour: int, birth_minute: int, latitude: float, longitude: float,
-                       timezone: str, ayanamsa: str = "LAHIRI") -> dict:
-    """Get all standard astrological remedies for detected yogas and doshas."""
-    return await _post("/vedic/remedies", _birth_payload(name, birth_year, birth_month, birth_day,
-                       birth_hour, birth_minute, latitude, longitude, timezone, "WHOLE_SIGN", "SIDEREAL", ayanamsa))
-
-@mcp.tool
 async def get_gemstones(name: str, birth_year: int, birth_month: int, birth_day: int,
                         birth_hour: int, birth_minute: int, latitude: float, longitude: float,
                         timezone: str, ayanamsa: str = "LAHIRI") -> dict:
@@ -310,9 +302,6 @@ async def get_mantras(name: str, birth_year: int, birth_month: int, birth_day: i
             if "pooja" in str(r.get("remedies", "")).lower() or "mantra" in str(r.get("remedies", "")).lower() or "worship" in str(r.get("remedies", "")).lower():
                 mantras.append(r)
     return {"mantra_recommendations": mantras if mantras else "No specific mantras required. General peace recommended."}
-    """Detect doshas: Mangal Dosha, Kala Sarpa Dosha, etc."""
-    return await _post("/vedic/doshas", _birth_payload(name, birth_year, birth_month, birth_day,
-                       birth_hour, birth_minute, latitude, longitude, timezone, "WHOLE_SIGN", "SIDEREAL", ayanamsa))
 
 
 @mcp.tool

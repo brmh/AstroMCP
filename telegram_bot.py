@@ -8,7 +8,7 @@ from telegram.ext import (
     ContextTypes,
     MessageHandler,
     filters,
-    ConversationFactory,
+    ConversationHandler,
 )
 from datetime import datetime
 import swisseph as swe
@@ -140,7 +140,7 @@ if __name__ == '__main__':
     
     application = ApplicationBuilder().token(TOKEN).build()
     
-    conv_handler = ConversationFactory(
+    conv_handler = ConversationHandler(
         entry_points=[CommandHandler('kundli', kundli_start)],
         states={
             NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_name)],

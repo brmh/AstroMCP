@@ -13,7 +13,9 @@ BASE_URL = "https://www.astro.com/ftp/swisseph/ephe/"
 FILES = [
     "semo_18.se1",   # Moon 1800-2400 CE
     "sepl_18.se1",   # Planets 1800-2400 CE
-    "seas_18.se1",   # Asteroids 1800-2400 CE
+    "seas_18.se1",   # Asteroids (Ceres, Pallas, Juno, Vesta) 1800-2400 CE
+    "sech_18.se1",   # Chiron 1800-2400 CE
+    "seph_18.se1",   # Pholus 1800-2400 CE
     "sefstars.txt",  # Fixed stars
 ]
 

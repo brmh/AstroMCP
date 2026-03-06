@@ -24,6 +24,9 @@ WORKDIR $HOME/app
 # Copy application files and switch ownership
 COPY --chown=user . $HOME/app
 
+# Ensure start.sh is executable
+RUN chmod +x start.sh
+
 # Download the 50MB of Swiss Ephemeris Data Files
 RUN python scripts/download_ephemeris.py
 
@@ -33,5 +36,5 @@ ENV PORT=7860
 # Expose the port
 EXPOSE 7860
 
-# Start the FastAPI application via Uvicorn
-CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "7860"]
+# Start both API and Bot using start.sh
+CMD ["./start.sh"]

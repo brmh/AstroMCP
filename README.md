@@ -8,7 +8,7 @@ pinned: false
 ---
 # 🔭 AstroConsultant — AI Astrology MCP Server
 
-Professional-grade astrology API + MCP Server powered by **Swiss Ephemeris** (`pyswisseph`), supporting both **Western (Tropical)** and **Vedic/Jyotish (Sidereal)** traditions. Exposes **48 MCP tools** and **70+ API endpoints** for comprehensive astrological consultation.
+Professional-grade astrology API + MCP Server + **Telegram Bot** powered by **Swiss Ephemeris** (`pyswisseph`), supporting both **Western (Tropical)** and **Vedic/Jyotish (Sidereal)** traditions. Exposes **48 MCP tools**, **70+ API endpoints**, and an interactive **Telegram Bot** for comprehensive astrological consultation.
 
 ```
 ┌──────────────────────────────────────────────────┐

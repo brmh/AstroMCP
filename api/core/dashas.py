@@ -35,7 +35,10 @@ def get_vimshottari_dasha_start(moon_longitude: float, birth_jd: float) -> Dict:
     lord_index = DASHA_LORDS.index(nak_lord)
     dasha_period_years = DASHA_YEARS[lord_index]
     nak_span = 360.0 / 27.0
-    fraction_elapsed = (moon_longitude % nak_span) / nak_span
+    # FIX: compute position within the specific nakshatra (not modulo entire zodiac)
+    nak_index = int(moon_longitude / nak_span)
+    pos_within_nak = moon_longitude - (nak_index * nak_span)
+    fraction_elapsed = pos_within_nak / nak_span
     elapsed_years = fraction_elapsed * dasha_period_years
     remaining_years = dasha_period_years - elapsed_years
     return {
@@ -59,7 +62,8 @@ def get_mahadashas(birth_jd: float, moon_longitude: float) -> List[Dict]:
     mahadashas.append({"lord": info["birth_dasha_lord"], "start_jd": cur, "end_jd": end,
                         "duration_years": round(remaining, 4), "is_birth_dasha": True})
     cur = end
-    for i in range(1, 9):
+    # FIX: generate 3 full 120-year cycles (27 iterations) for complete lifetime coverage
+    for i in range(1, 27):
         idx = (lord_index + i) % 9
         years = DASHA_YEARS[idx]
         end = cur + years * JD_PER_YEAR

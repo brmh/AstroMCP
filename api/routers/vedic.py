@@ -164,9 +164,8 @@ async def vedic_chara_dasha(request: NatalChartRequest):
 async def vedic_vimshottari(request: NatalChartRequest):
     jd = birth_data_to_jd(request.birth_data)
     positions = get_all_planet_positions(jd, zodiac_type="SIDEREAL", ayanamsa=request.options.ayanamsa.value)
-    moon_lon = positions.get("moon", {}).get("longitude", 0)
-    ayanamsa_val = get_ayanamsa_value(jd, request.options.ayanamsa.value)
-    moon_sid = (moon_lon - ayanamsa_val) % 360
+    # FIX Bug 1: positions are already sidereal — do NOT subtract ayanamsa again
+    moon_sid = positions.get("moon", {}).get("longitude", 0)
     mahadashas = get_mahadashas(jd, moon_sid)
     result = []
     for md in mahadashas:
@@ -179,9 +178,8 @@ async def vedic_vimshottari(request: NatalChartRequest):
 async def vedic_current_dasha(request: NatalChartRequest):
     jd = birth_data_to_jd(request.birth_data)
     positions = get_all_planet_positions(jd, zodiac_type="SIDEREAL", ayanamsa=request.options.ayanamsa.value)
-    moon_lon = positions.get("moon", {}).get("longitude", 0)
-    ayanamsa_val = get_ayanamsa_value(jd, request.options.ayanamsa.value)
-    moon_sid = (moon_lon - ayanamsa_val) % 360
+    # FIX Bug 1: already sidereal — no ayanamsa subtraction needed
+    moon_sid = positions.get("moon", {}).get("longitude", 0)
     return get_current_dasha(jd, moon_sid, get_current_jd())
 
 
@@ -189,18 +187,18 @@ async def vedic_current_dasha(request: NatalChartRequest):
 async def vedic_yogini_dasha(request: NatalChartRequest):
     jd = birth_data_to_jd(request.birth_data)
     positions = get_all_planet_positions(jd, zodiac_type="SIDEREAL", ayanamsa=request.options.ayanamsa.value)
-    moon_lon = positions.get("moon", {}).get("longitude", 0)
-    ayanamsa_val = get_ayanamsa_value(jd, request.options.ayanamsa.value)
-    return get_yogini_dashas(jd, (moon_lon - ayanamsa_val) % 360)
+    # FIX Bug 1: already sidereal
+    moon_sid = positions.get("moon", {}).get("longitude", 0)
+    return get_yogini_dashas(jd, moon_sid)
 
 
 @router.post("/dashas/kalachakra")
 async def vedic_kalachakra_dasha(request: NatalChartRequest):
     jd = birth_data_to_jd(request.birth_data)
     positions = get_all_planet_positions(jd, zodiac_type="SIDEREAL", ayanamsa=request.options.ayanamsa.value)
-    moon_lon = positions.get("moon", {}).get("longitude", 0)
-    ayanamsa_val = get_ayanamsa_value(jd, request.options.ayanamsa.value)
-    return get_kalachakra_dasha(jd, (moon_lon - ayanamsa_val) % 360)
+    # FIX Bug 1: already sidereal
+    moon_sid = positions.get("moon", {}).get("longitude", 0)
+    return get_kalachakra_dasha(jd, moon_sid)
 
 
 from pydantic import BaseModel
@@ -253,6 +251,8 @@ async def vedic_ashtakavarga(request: NatalChartRequest):
     bd = request.birth_data
     positions = get_all_planet_positions(jd, zodiac_type="SIDEREAL", ayanamsa=request.options.ayanamsa.value)
     houses = get_houses(jd, bd.latitude, bd.longitude, "WHOLE_SIGN", "SIDEREAL", request.options.ayanamsa.value)
+    # FIX Bug 4: assign_houses_to_planets sets sign_index needed for AV calculation
+    positions = assign_houses_to_planets(positions, houses)
     return get_sarvashtakavarga(positions, houses)
 
 

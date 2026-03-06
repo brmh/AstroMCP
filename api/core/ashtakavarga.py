@@ -109,7 +109,14 @@ def get_bhinnashtakavarga(positions: Dict, houses: Dict) -> Dict[str, List[int]]
             if contributor == "ascendant":
                 contrib_sign_idx = asc_sign_idx
             else:
-                contrib_sign_idx = positions.get(contributor, {}).get("sign_index", 0)
+                p_data = positions.get(contributor, {})
+                # FIX Bug 4: fall back to computing sign_index from longitude
+                # if assign_houses_to_planets was not called
+                if "sign_index" in p_data:
+                    contrib_sign_idx = p_data["sign_index"]
+                else:
+                    lon = p_data.get("longitude", 0)
+                    contrib_sign_idx = int(lon / 30) % 12
 
             for offset, has_point in enumerate(bits):
                 if has_point:

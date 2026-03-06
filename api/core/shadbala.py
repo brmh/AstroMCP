@@ -3,7 +3,10 @@ Shadbala (Six-fold Planetary Strength) Calculations.
 """
 
 from typing import Dict, List, Any
-from api.core.ephemeris import SIGNS, EXALTATION, DEBILITATION, longitude_to_sign
+from api.core.ephemeris import (
+    SIGNS, EXALTATION, DEBILITATION, MOOLATRIKONA, PLANETARY_FRIENDSHIP,
+    SIGN_RULERS, longitude_to_sign
+)
 import math
 
 # Naisargika Bala (Natural strength) — fixed values in Shashtiamsas
@@ -38,6 +41,41 @@ def calculate_uchcha_bala(planet: str, longitude: float) -> float:
     if diff > 180:
         diff = 360 - diff
     return round((180 - diff) / 3, 2)  # Max 60 at exact exaltation
+
+
+def calculate_dignity_bala(planet: str, longitude: float) -> float:
+    """
+    FIX: Saptavargaja Bala (dignity strength in Rasi).
+    Own sign: 45, Moolatrikona: 45, Friendly: 30, Neutral: 15, Enemy: 7.5, Debilitation: 0.
+    Added to Sthana Bala for more accurate total.
+    """
+    if planet not in SIGN_RULERS:
+        return 15.0
+    sign_name, sign_idx, _ = longitude_to_sign(longitude)
+    own_ruler = SIGN_RULERS[sign_idx].lower()
+
+    # Check moolatrikona
+    if planet in MOOLATRIKONA:
+        mt_sign, mt_start, mt_end = MOOLATRIKONA[planet]
+        deg_in_sign = longitude % 30
+        if sign_name == mt_sign and mt_start <= deg_in_sign <= mt_end:
+            return 45.0
+
+    # Check own sign
+    if own_ruler == planet:
+        return 45.0
+
+    # Check friendship
+    friendship = PLANETARY_FRIENDSHIP.get(planet, {})
+    if own_ruler in friendship.get("friends", []):
+        return 30.0
+    elif own_ruler in friendship.get("enemies", []):
+        # Check debilitation
+        if planet in DEBILITATION and DEBILITATION[planet][0] == sign_name:
+            return 0.0
+        return 7.5
+    else:
+        return 15.0  # neutral
 
 
 def calculate_dig_bala(planet: str, house: int) -> float:
@@ -98,12 +136,20 @@ def calculate_drik_bala(planet: str, aspects_received: List[Dict]) -> float:
 
 def calculate_shadbala(
     positions: Dict, houses: Dict, aspects: List[Dict],
-    jd: float = 0, is_day: bool = True,
+    jd: float = 0, is_day: bool = None,
 ) -> Dict[str, Dict]:
     """
     Calculate complete Shadbala for all planets.
     Returns strengths in Shashtiamsas and Rupas (1 Rupa = 60 Shashtiamsas).
     """
+    # FIX Bug 5: Derive is_day from the actual Sun house if not provided
+    if is_day is None:
+        asc_lon = houses.get("ascendant", 0)
+        sun_lon = positions.get("sun", {}).get("longitude", 0)
+        # Sun in houses 7-12 (above horizon in whole-sign reckoning) = daytime
+        sun_house_offset = int(((sun_lon - asc_lon) % 360) / 30)
+        is_day = sun_house_offset >= 6  # offsets 6-11 = houses 7-12
+
     results = {}
     shadbala_planets = ["sun", "moon", "mars", "mercury", "jupiter", "venus", "saturn"]
 
@@ -117,7 +163,11 @@ def calculate_shadbala(
 
         planet_aspects = [a for a in aspects if a.get("planet1") == planet or a.get("planet2") == planet]
 
-        sthana = calculate_uchcha_bala(planet, lon)
+        # FIX Bug 6: Sthana Bala = Uchcha Bala + Dignity Bala (combined)
+        uchcha = calculate_uchcha_bala(planet, lon)
+        dignity = calculate_dignity_bala(planet, lon)
+        sthana = round((uchcha + dignity) / 2, 2)  # average to keep in 0-60 range
+
         dig = calculate_dig_bala(planet, house)
         kala = calculate_kala_bala(planet, jd, is_day)
         chesta = calculate_chesta_bala(planet, speed)
@@ -129,12 +179,15 @@ def calculate_shadbala(
         min_required = MIN_SHADBALA.get(planet, 5.0)
 
         results[planet] = {
+            "uchcha_bala": uchcha,
+            "dignity_bala": dignity,
             "sthana_bala": sthana, "dig_bala": dig, "kala_bala": kala,
             "chesta_bala": chesta, "naisargika_bala": naisargika, "drik_bala": drik,
             "total_shashtiamsas": round(total_shashtiamsas, 2),
             "total_rupas": total_rupas,
             "minimum_required_rupas": min_required,
             "is_strong": total_rupas >= min_required,
+            "birth_is_daytime": is_day,
         }
 
     return results

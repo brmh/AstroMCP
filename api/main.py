@@ -141,7 +141,7 @@ async def root():
         "version": "1.0.1",  
         "description": "Professional Astrology API powered by Swiss Ephemeris",
         "documentation": "/docs",
-        "uptime_seconds": time.time() - start_time,
+        "uptime_seconds": time.time() - START_TIME,
         "endpoints": {
             "natal": "/natal/chart",
             "vedic": "/vedic/kundli", 

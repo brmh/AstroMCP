@@ -8,7 +8,7 @@ pinned: false
 ---
 # 🔭 AstroConsultant — AI Astrology MCP Server
 
-Professional-grade astrology API + MCP Server powered by **Swiss Ephemeris** (`pyswisseph`), supporting both **Western (Tropical)** and **Vedic/Jyotish (Sidereal)** traditions. Exposes **48 MCP tools** and **70+ API endpoints** for comprehensive astrological consultation.
+Professional-grade astrology API + MCP Server powered by **Swiss Ephemeris** (`pyswisseph`), supporting both **Western (Tropical)** and **Vedic/Jyotish (Sidereal)** traditions. Exposes **49 MCP tools** and **70+ API endpoints** for comprehensive astrological consultation.
 
 ```
 ┌──────────────────────────────────────────────────┐
@@ -18,7 +18,7 @@ Professional-grade astrology API + MCP Server powered by **Swiss Ephemeris** (`p
 │                      │                           │
 │           ┌──────────▼──────────┐                │
 │           │   MCP Server        │                │
-│           │  (48 tools)         │                │
+│           │  (49 tools)         │                │
 │           └──────────┬──────────┘                │
 │                      │ HTTP/JSON                 │
 │           ┌──────────▼──────────┐                │
@@ -149,6 +149,7 @@ Every tool is available to Claude Desktop (or any MCP client) via the `AstroCons
 | 46 | `get_astrocartography` | Analysis |
 | 47 | `geocode_location` | Utility |
 | 48 | `get_nakshatra_info` | Utility |
+| 49 | `get_pro_analysis` | **PROFESSIONAL COMPLETE ANALYSIS** |
 
 </details>
 

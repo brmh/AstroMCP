@@ -29,6 +29,7 @@ RUN python scripts/download_ephemeris.py
 
 # Hugging Face Spaces Docker environments run on port 7860 by default
 ENV PORT=7860
+ENV PYTHONUNBUFFERED=1
 
 # Expose the port
 EXPOSE 7860

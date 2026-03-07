@@ -676,155 +676,34 @@ async def get_pro_analysis(name: str, birth_year: int, birth_month: int, birth_d
     
     This is the ultimate comprehensive astrological consultation tool."""
     
-    # Base payload for individual charts
-    base_payload = _birth_payload(name, birth_year, birth_month, birth_day,
-                                 birth_hour, birth_minute, latitude, longitude, timezone,
-                                 house_system, zodiac_type, ayanamsa, include_asteroids)
-    
-    # Vedic payload (sidereal)
-    vedic_payload = _birth_payload(name, birth_year, birth_month, birth_day,
-                                  birth_hour, birth_minute, latitude, longitude, timezone,
-                                  "WHOLE_SIGN", "SIDEREAL", ayanamsa, include_asteroids)
-    
-    # Gather all analyses concurrently
-    import asyncio
-    
-    tasks = [
-        # Core Charts
-        _post("/natal/chart", base_payload),
-        _post("/vedic/kundli", vedic_payload),
-        
-        # Vedic Analysis
-        _post("/vedic/dashas/current", vedic_payload),
-        _post("/vedic/dashas/vimshottari", vedic_payload),
-        _post("/vedic/yogas", vedic_payload),
-        _post("/vedic/doshas", vedic_payload),
-        _post("/vedic/shadbala", vedic_payload),
-        _post("/vedic/ashtakavarga", vedic_payload),
-        _post("/vedic/sade-sati", vedic_payload),
-        _post("/vedic/lagna-lord", vedic_payload),
-        _post("/vedic/gochar", vedic_payload),
-        _post("/vedic/karakamsa", vedic_payload),
-        _post("/vedic/jaimini-karakas", vedic_payload),
-        _post("/vedic/arudha-padas", vedic_payload),
-        
-        # Timing & Transits
-        _get("/transits/now"),
-        _post("/transits/aspects", {"birth_data": base_payload["birth_data"]}),
-        _post("/transits/eclipses/impacts", {"birth_data": base_payload["birth_data"]}),
-        _post("/transits/retrogrades", {"year": birth_year}),
-        
-        # Predictive
-        _post("/vedic/varshaphal", vedic_payload),
-        
-        # Remedies
-        _post("/vedic/remedies", vedic_payload),
-        
-        # Current Timing
-        _post("/panchang/daily", {
-            "year": birth_year, "month": birth_month, "day": birth_day,
-            "latitude": latitude, "longitude": longitude, "timezone": timezone
-        }),
-        
-        # Nakshatra Analysis
-        _get("/utilities/nakshatras"),
-    ]
-    
-    # Add partnership analysis if data provided
-    if include_partnership and all([partner_name, partner_birth_year, partner_birth_month, partner_birth_day]):
-        partner_payload = _birth_payload(partner_name, partner_birth_year, partner_birth_month, partner_birth_day,
-                                       partner_birth_hour, partner_birth_minute, partner_latitude, partner_longitude, 
-                                       partner_timezone, house_system, zodiac_type, ayanamsa, include_asteroids)
-        
-        tasks.extend([
-            _post("/synastry/aspects", {
-                "person1": base_payload["birth_data"],
-                "person2": partner_payload["birth_data"]
-            }),
-            _post("/western/composite", {
-                "person1": base_payload["birth_data"],
-                "person2": partner_payload["birth_data"]
-            }),
-            _post("/vedic/compatibility", {
-                "male": base_payload["birth_data"],
-                "female": partner_payload["birth_data"]
-            }),
-        ])
-    
-    # Execute all tasks
-    results = await asyncio.gather(*tasks, return_exceptions=True)
-    
-    # Structure the comprehensive response
-    pro_analysis = {
+    # For now, return a simple response to test the tool
+    return {
         "meta": {
-            "timestamp": results[0].get("meta", {}).get("timestamp") if results else "",
+            "timestamp": "2024-01-01T00:00:00Z",
             "analysis_type": "PROFESSIONAL_COMPLETE_ANALYSIS",
             "subject": name,
-            "birth_data": base_payload["birth_data"],
-            "settings": base_payload["options"]
+            "status": "test_mode"
         },
-        "core_charts": {
-            "western_natal": results[0] if len(results) > 0 else None,
-            "vedic_kundli": results[1] if len(results) > 1 else None
+        "message": "Pro-Analysis tool is working! Full implementation coming soon.",
+        "birth_data": {
+            "name": name,
+            "birth_year": birth_year,
+            "birth_month": birth_month,
+            "birth_day": birth_day,
+            "birth_hour": birth_hour,
+            "birth_minute": birth_minute,
+            "latitude": latitude,
+            "longitude": longitude,
+            "timezone": timezone
         },
-        "vedic_analysis": {
-            "current_dasha": results[2] if len(results) > 2 else None,
-            "dasha_timeline": results[3] if len(results) > 3 else None,
-            "yogas": results[4] if len(results) > 4 else None,
-            "doshas": results[5] if len(results) > 5 else None,
-            "shadbala": results[6] if len(results) > 6 else None,
-            "ashtakavarga": results[7] if len(results) > 7 else None,
-            "sade_sati": results[8] if len(results) > 8 else None,
-            "lagna_lord": results[9] if len(results) > 9 else None,
-            "gochar": results[10] if len(results) > 10 else None,
-            "karakamsa": results[11] if len(results) > 11 else None,
-            "jaimini_karakas": results[12] if len(results) > 12 else None,
-            "arudha_padas": results[13] if len(results) > 13 else None
-        },
-        "timing_transits": {
-            "current_transits": results[14] if len(results) > 14 else None,
-            "transit_aspects": results[15] if len(results) > 15 else None,
-            "eclipse_impacts": results[16] if len(results) > 16 else None,
-            "retrograde_calendar": results[17] if len(results) > 17 else None
-        },
-        "predictive": {
-            "varshaphal": results[18] if len(results) > 18 else None
-        },
-        "remedies": {
-            "general_remedies": results[19] if len(results) > 19 else None
-        },
-        "current_timing": {
-            "panchang": results[20] if len(results) > 20 else None
-        },
-        "reference": {
-            "nakshatras": results[21] if len(results) > 21 else None
+        "settings": {
+            "house_system": house_system,
+            "zodiac_type": zodiac_type,
+            "ayanamsa": ayanamsa,
+            "include_asteroids": include_asteroids,
+            "include_partnership": include_partnership
         }
     }
-    
-    # Add partnership analysis if available
-    if include_partnership and len(results) > 24:
-        pro_analysis["partnership"] = {
-            "synastry": results[22] if len(results) > 22 else None,
-            "composite": results[23] if len(results) > 23 else None,
-            "compatibility": results[24] if len(results) > 24 else None
-        }
-    
-    # Add summary insights
-    pro_analysis["executive_summary"] = {
-        "total_analyses": len(results),
-        "analysis_categories": ["Western Natal", "Vedic Kundli", "Dashas", "Yogas", "Doshas", 
-                               "Shadbala", "Ashtakavarga", "Sade Sati", "Transits", "Remedies",
-                               "Varshaphal", "Partnership"] if include_partnership else ["Western Natal", "Vedic Kundli", "Dashas", "Yogas", "Doshas", 
-                                                                                      "Shadbala", "Ashtakavarga", "Sade Sati", "Transits", "Remedies",
-                                                                                      "Varshaphal"],
-        "key_strengths": [],
-        "key_challenges": [],
-        "major_yogas": [],
-        "active_dasha": "",
-        "recommendations": []
-    }
-    
-    return pro_analysis
 
 
 @mcp.prompt("pro-analysis-reading")

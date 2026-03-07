@@ -135,15 +135,16 @@ app.mount("/mcp", _local_mcp.mcp.http_app(transport="sse"))
 # ── Root Endpoint ────────────────────────────────────────────────────────
 @app.get("/")
 async def root():
+    """AstroConsultant API Root Endpoint"""
     return {
-        "name": settings.API_TITLE,
-        "version": settings.API_VERSION,
+        "name": "AstroConsultant API",
+        "version": "1.0.1",  
         "description": "Professional Astrology API powered by Swiss Ephemeris",
         "documentation": "/docs",
-        "uptime_seconds": round(time.time() - START_TIME, 1),
+        "uptime_seconds": time.time() - start_time,
         "endpoints": {
             "natal": "/natal/chart",
-            "vedic": "/vedic/kundli",
+            "vedic": "/vedic/kundli", 
             "transits": "/transits/current",
             "synastry": "/synastry/aspects",
             "panchang": "/panchang/daily",
@@ -151,7 +152,7 @@ async def root():
             "progressions": "/progressions/secondary",
             "western": "/western/chart",
             "fixed_stars": "/fixed-stars/list",
-            "utilities": "/utilities/health",
+            "utilities": "/utilities/health"
         },
-        "supported_traditions": ["Western (Tropical)", "Vedic/Jyotish (Sidereal)"],
+        "supported_traditions": ["Western (Tropical)", "Vedic/Jyotish (Sidereal)"]
     }

@@ -696,7 +696,7 @@ async def get_pro_analysis(name: str, birth_year: int, birth_month: int, birth_d
         
         # Vedic Analysis
         _post("/vedic/dashas/current", vedic_payload),
-        _post("/vedic/dashas/timeline", vedic_payload),
+        _post("/vedic/dashas/vimshottari", vedic_payload),
         _post("/vedic/yogas", vedic_payload),
         _post("/vedic/doshas", vedic_payload),
         _post("/vedic/shadbala", vedic_payload),
@@ -705,22 +705,20 @@ async def get_pro_analysis(name: str, birth_year: int, birth_month: int, birth_d
         _post("/vedic/lagna-lord", vedic_payload),
         _post("/vedic/gochar", vedic_payload),
         _post("/vedic/karakamsa", vedic_payload),
-        _post("/vedic/jaimini/karakas", vedic_payload),
+        _post("/vedic/jaimini-karakas", vedic_payload),
         _post("/vedic/arudha-padas", vedic_payload),
         
         # Timing & Transits
         _get("/transits/now"),
         _post("/transits/aspects", {"birth_data": base_payload["birth_data"]}),
-        _post("/transits/eclipse-impacts", {"birth_data": base_payload["birth_data"]}),
-        _get("/transits/retrograde-calendar", {"year": birth_year}),
+        _post("/transits/eclipses/impacts", {"birth_data": base_payload["birth_data"]}),
+        _post("/transits/retrogrades", {"year": birth_year}),
         
         # Predictive
-        _post("/timing/varshaphal", vedic_payload),
+        _post("/vedic/varshaphal", vedic_payload),
         
         # Remedies
         _post("/vedic/remedies", vedic_payload),
-        _post("/vedic/gemstones", vedic_payload),
-        _post("/vedic/mantras", vedic_payload),
         
         # Current Timing
         _post("/panchang/daily", {
@@ -739,15 +737,15 @@ async def get_pro_analysis(name: str, birth_year: int, birth_month: int, birth_d
                                        partner_timezone, house_system, zodiac_type, ayanamsa, include_asteroids)
         
         tasks.extend([
-            _post("/synastry/comparison", {
+            _post("/synastry/aspects", {
                 "person1": base_payload["birth_data"],
                 "person2": partner_payload["birth_data"]
             }),
-            _post("/synastry/composite", {
+            _post("/western/composite", {
                 "person1": base_payload["birth_data"],
                 "person2": partner_payload["birth_data"]
             }),
-            _post("/synastry/compatibility", {
+            _post("/vedic/compatibility", {
                 "male": base_payload["birth_data"],
                 "female": partner_payload["birth_data"]
             }),
@@ -793,24 +791,22 @@ async def get_pro_analysis(name: str, birth_year: int, birth_month: int, birth_d
             "varshaphal": results[18] if len(results) > 18 else None
         },
         "remedies": {
-            "general_remedies": results[19] if len(results) > 19 else None,
-            "gemstones": results[20] if len(results) > 20 else None,
-            "mantras": results[21] if len(results) > 21 else None
+            "general_remedies": results[19] if len(results) > 19 else None
         },
         "current_timing": {
-            "panchang": results[22] if len(results) > 22 else None
+            "panchang": results[20] if len(results) > 20 else None
         },
         "reference": {
-            "nakshatras": results[23] if len(results) > 23 else None
+            "nakshatras": results[21] if len(results) > 21 else None
         }
     }
     
     # Add partnership analysis if available
-    if include_partnership and len(results) > 26:
+    if include_partnership and len(results) > 24:
         pro_analysis["partnership"] = {
-            "synastry": results[24] if len(results) > 24 else None,
-            "composite": results[25] if len(results) > 25 else None,
-            "compatibility": results[26] if len(results) > 26 else None
+            "synastry": results[22] if len(results) > 22 else None,
+            "composite": results[23] if len(results) > 23 else None,
+            "compatibility": results[24] if len(results) > 24 else None
         }
     
     # Add summary insights

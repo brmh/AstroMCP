@@ -5,17 +5,89 @@ Calculates Bhinnashtakavarga and Sarvashtakavarga grids according to classical V
 
 from typing import Dict, List, Any
 
-# Benefic houses (counted from each planet) where bindus (points) are given
-# Based on classical Parashara Ashtakavarga system
-PLANET_BENEFIC_HOUSES = {
-    "sun": [1, 2, 4, 7, 8, 9, 10, 11],      # Sun gives bindus to these houses
-    "moon": [1, 3, 6, 7, 8, 10, 11],         # Moon gives bindus to these houses  
-    "mars": [1, 3, 6, 10, 11],               # Mars gives bindus to these houses
-    "mercury": [1, 3, 5, 6, 7, 9, 10, 11],  # Mercury gives bindus to these houses
-    "jupiter": [1, 2, 3, 4, 7, 8, 10, 11],  # Jupiter gives bindus to these houses
-    "venus": [1, 2, 3, 4, 5, 8, 9, 11],     # Venus gives bindus to these houses
-    "saturn": [1, 3, 6, 11],                 # Saturn gives bindus to these houses
-    "ascendant": [1, 2, 3, 4, 7, 8, 10, 11]  # Lagna gives bindus to these houses
+CLASSIC_PLANETS = ["sun", "moon", "mars", "mercury", "jupiter", "venus", "saturn"]
+
+EXPECTED_BHINNA_TOTALS = {
+    "sun": 48,
+    "moon": 49,
+    "mars": 39,
+    "mercury": 54,
+    "jupiter": 56,
+    "venus": 52,
+    "saturn": 39,
+}
+
+BHINNA_ASHTAKAVARGA_RULES = {
+    "sun": {
+        "sun": [1, 2, 4, 7, 8, 9, 10, 11],
+        "moon": [3, 6, 10, 11],
+        "mars": [1, 2, 4, 7, 8, 9, 10, 11],
+        "mercury": [3, 5, 6, 9, 10, 11, 12],
+        "jupiter": [5, 6, 9, 11],
+        "venus": [6, 7, 12],
+        "saturn": [1, 2, 4, 7, 8, 9, 10, 11],
+        "ascendant": [3, 4, 6, 10, 11, 12],
+    },
+    "moon": {
+        "sun": [3, 6, 7, 8, 10, 11],
+        "moon": [1, 3, 6, 7, 10, 11],
+        "mars": [2, 3, 5, 6, 9, 10, 11],
+        "mercury": [1, 3, 4, 5, 7, 8, 10, 11],
+        "jupiter": [1, 4, 7, 8, 10, 11, 12],
+        "venus": [3, 4, 5, 7, 9, 10, 11],
+        "saturn": [3, 5, 6, 11],
+        "ascendant": [3, 6, 10, 11],
+    },
+    "mars": {
+        "sun": [3, 5, 6, 10, 11],
+        "moon": [3, 6, 11],
+        "mars": [1, 2, 4, 7, 8, 10, 11],
+        "mercury": [3, 5, 6, 11],
+        "jupiter": [6, 10, 11, 12],
+        "venus": [6, 8, 11, 12],
+        "saturn": [1, 4, 7, 8, 9, 10, 11],
+        "ascendant": [1, 3, 6, 10, 11],
+    },
+    "mercury": {
+        "sun": [5, 6, 9, 11, 12],
+        "moon": [2, 4, 6, 8, 10, 11],
+        "mars": [1, 2, 4, 7, 8, 9, 10, 11],
+        "mercury": [1, 3, 5, 6, 9, 10, 11, 12],
+        "jupiter": [6, 8, 11, 12],
+        "venus": [1, 2, 3, 4, 5, 8, 9, 11],
+        "saturn": [1, 2, 4, 7, 8, 9, 10, 11],
+        "ascendant": [1, 2, 4, 6, 8, 10, 11],
+    },
+    "jupiter": {
+        "sun": [1, 2, 3, 4, 7, 8, 9, 10, 11],
+        "moon": [2, 5, 7, 9, 11],
+        "mars": [1, 2, 4, 7, 8, 10, 11],
+        "mercury": [1, 2, 4, 5, 6, 9, 10, 11],
+        "jupiter": [1, 2, 3, 4, 7, 8, 10, 11],
+        "venus": [2, 5, 6, 9, 10, 11],
+        "saturn": [3, 5, 6, 12],
+        "ascendant": [1, 2, 4, 5, 6, 7, 9, 10, 11],
+    },
+    "venus": {
+        "sun": [8, 11, 12],
+        "moon": [1, 2, 3, 4, 5, 8, 9, 11, 12],
+        "mars": [3, 5, 6, 9, 11, 12],
+        "mercury": [3, 5, 6, 9, 11],
+        "jupiter": [5, 8, 9, 10, 11],
+        "venus": [1, 2, 3, 4, 5, 8, 9, 10, 11],
+        "saturn": [3, 4, 5, 8, 9, 10, 11],
+        "ascendant": [1, 2, 3, 4, 5, 8, 9, 11],
+    },
+    "saturn": {
+        "sun": [1, 2, 4, 7, 8, 10, 11],
+        "moon": [3, 6, 11],
+        "mars": [3, 5, 6, 10, 11, 12],
+        "mercury": [6, 8, 9, 10, 11, 12],
+        "jupiter": [5, 6, 11, 12],
+        "venus": [6, 11, 12],
+        "saturn": [3, 5, 6, 11],
+        "ascendant": [1, 3, 4, 6, 10, 11],
+    },
 }
 
 ZODIAC_SIGNS = ["Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", 
@@ -48,41 +120,43 @@ def calculate_bindus_for_contributor(contributor_pos: int, benefic_houses: List[
     return bindus
 
 
+def get_prastarashtakavarga(positions: Dict, houses: Dict) -> Dict[str, Dict[str, List[int]]]:
+    asc_longitude = houses.get("ascendant", 0)
+    contributor_positions = {
+        planet: get_planet_sign_index(positions, planet)
+        for planet in CLASSIC_PLANETS
+    }
+    contributor_positions["ascendant"] = int(asc_longitude / 30) % 12
+
+    prasthara = {}
+    for planet, rules in BHINNA_ASHTAKAVARGA_RULES.items():
+        planet_rows = {}
+        for contributor, benefic_houses in rules.items():
+            planet_rows[contributor] = calculate_bindus_for_contributor(
+                contributor_positions[contributor],
+                benefic_houses,
+            )
+        prasthara[planet] = planet_rows
+
+    return prasthara
+
+
 def get_bhinnashtakavarga(positions: Dict, houses: Dict) -> Dict[str, List[int]]:
     """
     Calculate Bhinnashtakavarga (individual Ashtakavarga) for each of 7 planets.
     Each planet gets points from 8 contributors (7 planets + Ascendant).
     Returns: dict mapping planet name to list of 12 bindu counts (0-8 per sign)
     """
-    # Get positions of all 7 planets + Ascendant
-    contributors = ["sun", "moon", "mars", "mercury", "jupiter", "venus", "saturn"]
-    
-    # Get sign positions
-    contributor_positions = {}
-    for planet in contributors:
-        contributor_positions[planet] = get_planet_sign_index(positions, planet)
-    
-    # Add Ascendant position
-    asc_longitude = houses.get("ascendant", 0)
-    contributor_positions["ascendant"] = int(asc_longitude / 30) % 12
-    
-    # Calculate Bhinnashtakavarga for each of the 7 planets
+    prasthara = get_prastarashtakavarga(positions, houses)
     results = {}
-    
-    for planet in contributors:
-        planet_bindus = [0] * 12  # Each sign can get 0-8 bindus total
-        
-        # Each contributor gives 0 or 1 bindu to each sign
-        for contributor, contrib_pos in contributor_positions.items():
-            benefic_houses = PLANET_BENEFIC_HOUSES[contributor]
-            contributor_bindus = calculate_bindus_for_contributor(contrib_pos, benefic_houses)
-            
-            # Add contributor's bindus to planet's total
+
+    for planet, contributor_rows in prasthara.items():
+        planet_bindus = [0] * 12
+        for contributor_bindus in contributor_rows.values():
             for sign_idx in range(12):
                 planet_bindus[sign_idx] += contributor_bindus[sign_idx]
-        
         results[planet] = planet_bindus
-    
+
     return results
 
 
@@ -93,6 +167,7 @@ def get_sarvashtakavarga(positions: Dict, houses: Dict) -> Dict[str, Any]:
     Maximum possible: 56 points per sign (8 contributors × 7 planets).
     """
     bhinna = get_bhinnashtakavarga(positions, houses)
+    prasthara = get_prastarashtakavarga(positions, houses)
     sarva = [0] * 12
     
     # Sum up bindus across all 7 planets for each sign
@@ -107,6 +182,9 @@ def get_sarvashtakavarga(positions: Dict, houses: Dict) -> Dict[str, Any]:
         if points >= 30:
             strength = "Very Strong"
             interpretation = "Excellent results when planets transit here"
+        elif points >= 28:
+            strength = "Good"
+            interpretation = "Prosperous for transits and generally supportive"
         elif points >= 25:
             strength = "Average to Good" 
             interpretation = "Good results expected"
@@ -120,14 +198,19 @@ def get_sarvashtakavarga(positions: Dict, houses: Dict) -> Dict[str, Any]:
             "total_points": points,
             "max_possible": 56,
             "strength": strength,
-            "interpretation": interpretation
+            "interpretation": interpretation,
+            "prosperous_28_rule": points >= 28,
         })
     
     return {
+        "prastharashtakavarga": prasthara,
         "bhinnashtakavarga": bhinna,
         "sarvashtakavarga": sarva,
         "total_points": sum(sarva),
-        "max_total_points": 56 * 12,  # 12 signs × 56 max points
+        "planet_totals": {planet: sum(points) for planet, points in bhinna.items()},
+        "expected_planet_totals": EXPECTED_BHINNA_TOTALS,
+        "classical_total_match": {planet: sum(points) == EXPECTED_BHINNA_TOTALS[planet] for planet, points in bhinna.items()},
+        "max_total_points": 56 * 12,
         "house_analysis": house_analysis,
         "calculation_method": "Classical Parashara Ashtakavarga"
     }
@@ -162,9 +245,9 @@ def get_transit_scoring(natal_positions: Dict[str, Any], natal_houses: Dict[str,
         house_idx = (t_sign_idx - asc_sign_idx) % 12
         actual_house = house_idx + 1
         
-        # Get AV scores for that house
-        planet_bav_score = bhinna.get(planet, [0]*12)[house_idx]
-        total_sav_score = sarva[house_idx]
+        # Get AV scores for the actual transit sign
+        planet_bav_score = bhinna.get(planet, [0]*12)[t_sign_idx]
+        total_sav_score = sarva[t_sign_idx]
         
         # Scoring logic based on corrected Ashtakavarga
         # BAV: >= 4 is good, < 4 is challenging
@@ -175,13 +258,16 @@ def get_transit_scoring(natal_positions: Dict[str, Any], natal_houses: Dict[str,
             bav_interp = "Challenging Transit"
             total_transit_score -= 1
             
-        # SAV: >= 30 very strong, 25-29 average to good, < 25 weak
+        # SAV: >= 30 very strong, 28-29 prosperous, 25-27 average to good, < 25 weak
         if total_sav_score >= 30:
             sav_interp = "Very Strong Environmental Support"
             total_transit_score += 2
+        elif total_sav_score >= 28:
+            sav_interp = "Prosperous / Supportive"
+            total_transit_score += 1
         elif total_sav_score >= 25:
             sav_interp = "Good Environmental Support"
-            total_transit_score += 1
+            total_transit_score += 0
         else:
             sav_interp = "Weak Environmental Support"
             total_transit_score -= 1
@@ -193,7 +279,7 @@ def get_transit_scoring(natal_positions: Dict[str, Any], natal_houses: Dict[str,
             "bav_interpretation": bav_interp,
             "sarvashtakavarga_score": total_sav_score,
             "sav_interpretation": sav_interp,
-            "combined_score": "Positive" if (planet_bav_score >= 4 and total_sav_score >= 25) else "Mixed" if (planet_bav_score >= 4 or total_sav_score >= 25) else "Challenging"
+            "combined_score": "Positive" if (planet_bav_score >= 4 and total_sav_score >= 28) else "Mixed" if (planet_bav_score >= 4 or total_sav_score >= 25) else "Challenging"
         }
     
     overall_interp = "Highly Favorable Phase" if total_transit_score > 5 else ("Positive Phase" if total_transit_score > 0 else ("Mixed Phase" if total_transit_score == 0 else "Challenging Phase"))

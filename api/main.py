@@ -138,7 +138,7 @@ async def root():
     """AstroConsultant API Root Endpoint"""
     return {
         "name": "AstroConsultant API",
-        "version": "1.0.1",  
+        "version": "1.0.2",  
         "description": "Professional Astrology API powered by Swiss Ephemeris",
         "documentation": "/docs",
         "uptime_seconds": time.time() - START_TIME,

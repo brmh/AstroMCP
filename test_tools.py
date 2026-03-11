@@ -50,6 +50,9 @@ async def main():
     await test_endpoint("Eclipse Impacts", "/transits/eclipses/impacts", {"natal": birth_payload["birth_data"], "year": 2024})
     await test_endpoint("Retrogrades", "/transits/retrogrades", {"natal": birth_payload["birth_data"], "start_date": "2024-01-01", "end_date": "2024-12-31", "options": {}})
 
+    print("\n--- Note ---")
+    print("Testing Pro-Analysis requires testing via the MCP interface, but we can verify the API is running.")
+
     print("\nAll new tool endpoints checked against API.")
 
 if __name__ == "__main__":

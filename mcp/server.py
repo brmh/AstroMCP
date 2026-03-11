@@ -5,6 +5,8 @@ Wraps the FastAPI backend using FastMCP for Claude Desktop integration.
 
 import os
 import json
+import asyncio
+import datetime
 from typing import Optional
 from fastmcp import FastMCP
 import httpx
@@ -676,15 +678,56 @@ async def get_pro_analysis(name: str, birth_year: int, birth_month: int, birth_d
     
     This is the ultimate comprehensive astrological consultation tool."""
     
-    # For now, return a simple response to test the tool
-    return {
+    core_payload = _birth_payload(name, birth_year, birth_month, birth_day, birth_hour, birth_minute, latitude, longitude, timezone, house_system, zodiac_type, ayanamsa, include_asteroids)
+    vedic_payload = _birth_payload(name, birth_year, birth_month, birth_day, birth_hour, birth_minute, latitude, longitude, timezone, "WHOLE_SIGN", "SIDEREAL", ayanamsa)
+
+    async def fetch_section(section_name: str, func, *args, **kwargs):
+        try:
+            res = await func(*args, **kwargs)
+            # If the response itself encapsulated an error in the envelope
+            if isinstance(res, dict) and "error" in res:
+                return section_name, res
+            if isinstance(res, dict) and "data" in res and isinstance(res["data"], dict) and "error" in res["data"]:
+                return section_name, {"error": res["data"]["error"]}
+            return section_name, res
+        except Exception as e:
+            return section_name, {"error": str(e)}
+
+    # Define tasks
+    tasks = [
+        fetch_section("natal_chart", _post, "/natal/chart", core_payload),
+        fetch_section("vedic_kundli", _post, "/vedic/kundli", vedic_payload),
+        fetch_section("navamsa_d9", _post, "/vedic/varga/9", vedic_payload),
+        fetch_section("dashas_current", _post, "/vedic/dashas/current", vedic_payload),
+        fetch_section("dashas_timeline", _post, "/vedic/dashas/vimshottari", vedic_payload),
+        fetch_section("yogas", _post, "/vedic/yogas", vedic_payload),
+        fetch_section("doshas", _post, "/vedic/doshas", vedic_payload),
+        fetch_section("shadbala", _post, "/vedic/shadbala", vedic_payload),
+        fetch_section("ashtakavarga", _post, "/vedic/ashtakavarga", vedic_payload),
+        fetch_section("remedies", _post, "/vedic/remedies", vedic_payload),
+        fetch_section("lagna_lord", _post, "/vedic/lagna-lord", vedic_payload),
+        fetch_section("jaimini_karakas", _post, "/vedic/jaimini-karakas", vedic_payload),
+        fetch_section("arudha_padas", _post, "/vedic/arudha-padas", vedic_payload),
+        fetch_section("karakamsa", _post, "/vedic/karakamsa", vedic_payload),
+        fetch_section("sade_sati", _post, "/vedic/sade-sati", vedic_payload),
+        fetch_section("upagrahas", _post, "/vedic/upagrahas", vedic_payload),
+        fetch_section("arabic_parts", _post, "/natal/arabic-parts", _birth_payload(name, birth_year, birth_month, birth_day, birth_hour, birth_minute, latitude, longitude, timezone))
+    ]
+
+    results = await asyncio.gather(*tasks)
+    
+    sections_failed = sum(1 for _, res in results if "error" in res)
+    sections_ok = len(results) - sections_failed
+
+    response = {
         "meta": {
-            "timestamp": "2024-01-01T00:00:00Z",
+            "timestamp": datetime.datetime.utcnow().isoformat() + "Z",
             "analysis_type": "PROFESSIONAL_COMPLETE_ANALYSIS",
             "subject": name,
-            "status": "test_mode"
+            "status": "success",
+            "sections_ok": sections_ok,
+            "sections_failed": sections_failed
         },
-        "message": "Pro-Analysis tool is working! Full implementation coming soon.",
         "birth_data": {
             "name": name,
             "birth_year": birth_year,
@@ -702,8 +745,10 @@ async def get_pro_analysis(name: str, birth_year: int, birth_month: int, birth_d
             "ayanamsa": ayanamsa,
             "include_asteroids": include_asteroids,
             "include_partnership": include_partnership
-        }
+        },
+        "analysis": {k: v for k, v in results}
     }
+    return response
 
 
 @mcp.prompt("pro-analysis-reading")

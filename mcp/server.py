@@ -139,8 +139,8 @@ async def get_remedies(name: str, birth_year: int, birth_month: int, birth_day: 
 @mcp.tool
 async def get_gochar_report(name: str, birth_year: int, birth_month: int, birth_day: int,
                             birth_hour: int, birth_minute: int, latitude: float, longitude: float,
-                            timezone: str, transit_year: int = None, transit_month: int = None, 
-                            transit_day: int = None, ayanamsa: str = "LAHIRI") -> dict:
+                            timezone: str, transit_year: Optional[int] = None, transit_month: Optional[int] = None, 
+                            transit_day: Optional[int] = None, ayanamsa: str = "LAHIRI") -> dict:
     """Calculate the Vedic Gochar (transit) report based on natal Moon sign. If transit date omitted, uses today."""
     payload = _birth_payload(name, birth_year, birth_month, birth_day, birth_hour, birth_minute, 
                              latitude, longitude, timezone, "WHOLE_SIGN", "SIDEREAL", ayanamsa)
@@ -167,8 +167,8 @@ async def get_arudha_padas(name: str, birth_year: int, birth_month: int, birth_d
 @mcp.tool
 async def get_transit_scoring(name: str, birth_year: int, birth_month: int, birth_day: int,
                               birth_hour: int, birth_minute: int, latitude: float, longitude: float,
-                              timezone: str, transit_year: int = None, transit_month: int = None,
-                              transit_day: int = None, ayanamsa: str = "LAHIRI") -> dict:
+                              timezone: str, transit_year: Optional[int] = None, transit_month: Optional[int] = None,
+                              transit_day: Optional[int] = None, ayanamsa: str = "LAHIRI") -> dict:
     """Evaluate transit favorability using Ashtakavarga scoring (Kakshya). Scores transiting planets against the natal chart's points grid."""
     payload = _birth_payload(name, birth_year, birth_month, birth_day, birth_hour, birth_minute,
                              latitude, longitude, timezone, "WHOLE_SIGN", "SIDEREAL", ayanamsa)
@@ -254,7 +254,7 @@ async def get_dasha_timeline(name: str, birth_year: int, birth_month: int, birth
                        birth_hour, birth_minute, latitude, longitude, timezone, "WHOLE_SIGN", "SIDEREAL", ayanamsa))
 
 @mcp.tool
-async def get_dasha_interpretation(mahadasha_lord: str, antardasha_lord: str = None) -> dict:
+async def get_dasha_interpretation(mahadasha_lord: str, antardasha_lord: Optional[str] = None) -> dict:
     """Get standalone thematic interpretation text for a specific Mahadasha and Antardasha combination. Pass planet names like 'Jupiter'."""
     payload = {"mahadasha_lord": mahadasha_lord}
     if antardasha_lord:
@@ -483,7 +483,7 @@ async def get_eclipse_impacts(name: str, birth_year: int, birth_month: int, birt
 
 
 @mcp.tool
-async def geocode_location(city: str, country: str = None) -> dict:
+async def geocode_location(city: str, country: Optional[str] = None) -> dict:
     """Convert a city name to geographic coordinates and timezone."""
     return await _post("/utilities/geocode", {"city": city, "country": country})
 

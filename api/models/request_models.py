@@ -4,7 +4,7 @@ Input models for all API endpoints.
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional, Dict
+from typing import Optional, Dict, Union
 from enum import Enum
 from datetime import date, datetime
 
@@ -85,7 +85,7 @@ class NatalChartRequest(BaseModel):
 
 
 class TransitRequest(BaseModel):
-    natal: BirthData
+    natal: Union[BirthData, Dict]
     transit_date: Optional[datetime] = None
     transit_latitude: Optional[float] = None
     transit_longitude: Optional[float] = None

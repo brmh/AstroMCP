@@ -153,8 +153,18 @@ async def get_gochar_report(name: str, birth_year: int, birth_month: int, birth_
                             timezone: str, transit_year: Optional[int] = None, transit_month: Optional[int] = None, 
                             transit_day: Optional[int] = None, ayanamsa: str = "LAHIRI") -> dict:
     """Calculate the Vedic Gochar (transit) report based on natal Moon sign. If transit date omitted, uses today."""
-    payload = _transit_payload(name, birth_year, birth_month, birth_day, birth_hour, birth_minute, 
-                              latitude, longitude, timezone, "WHOLE_SIGN", "SIDEREAL", ayanamsa)
+    # 1. Get natal chart first
+    natal_payload = _birth_payload(name, birth_year, birth_month, birth_day, birth_hour, birth_minute, 
+                                   latitude, longitude, timezone, "WHOLE_SIGN", "SIDEREAL", ayanamsa)
+    natal_response = await _post("/natal/chart", natal_payload)
+    if natal_response.get("meta", {}).get("status") != "success":
+        return natal_response
+
+    # 2. Call gochar with the pre-computed chart
+    payload = {
+        "natal": natal_response.get("data", {}),
+        "options": natal_payload["options"]
+    }
     if transit_year and transit_month and transit_day:
         payload["transit_date"] = f"{transit_year:04d}-{transit_month:02d}-{transit_day:02d}T12:00:00Z"
     return await _post("/vedic/gochar", payload)
@@ -181,11 +191,24 @@ async def get_transit_scoring(name: str, birth_year: int, birth_month: int, birt
                               timezone: str, transit_year: Optional[int] = None, transit_month: Optional[int] = None,
                               transit_day: Optional[int] = None, ayanamsa: str = "LAHIRI") -> dict:
     """Evaluate transit favorability using Ashtakavarga scoring (Kakshya). Scores transiting planets against the natal chart's points grid."""
-    payload = _transit_payload(name, birth_year, birth_month, birth_day, birth_hour, birth_minute,
-                              latitude, longitude, timezone, "WHOLE_SIGN", "SIDEREAL", ayanamsa)
+    # 1. Get the pre-computed natal chart first
+    natal_payload = _birth_payload(name, birth_year, birth_month, birth_day, birth_hour, birth_minute,
+                                   latitude, longitude, timezone, "WHOLE_SIGN", "SIDEREAL", ayanamsa)
+    natal_response = await _post("/natal/chart", natal_payload)
+
+    if natal_response.get("meta", {}).get("status") != "success":
+        return natal_response
+
+    # 2. Extract chart data and pass it to transit scoring
+    chart_data = natal_response.get("data", {})
+    transit_payload = {
+        "natal": chart_data,
+        "options": natal_payload["options"]
+    }
     if transit_year and transit_month and transit_day:
-        payload["transit_date"] = f"{transit_year:04d}-{transit_month:02d}-{transit_day:02d}T12:00:00Z"
-    return await _post("/transits/ashtakavarga-score", payload)
+        transit_payload["transit_date"] = f"{transit_year:04d}-{transit_month:02d}-{transit_day:02d}T12:00:00Z"
+
+    return await _post("/transits/ashtakavarga-score", transit_payload)
 
 @mcp.tool
 async def get_lagna_lord_analysis(name: str, birth_year: int, birth_month: int, birth_day: int,
@@ -242,9 +265,19 @@ async def get_secondary_progressions(name: str, birth_year: int, birth_month: in
                                      timezone: str, transit_year: int, transit_month: int, transit_day: int,
                                      house_system: str = "PLACIDUS") -> dict:
     """Calculate Western Secondary Progressions (day-for-a-year). Requires the target transit date."""
-    payload = _transit_payload(name, birth_year, birth_month, birth_day, birth_hour, birth_minute, 
-                              latitude, longitude, timezone, house_system, "TROPICAL", "LAHIRI")
-    payload["transit_date"] = f"{transit_year:04d}-{transit_month:02d}-{transit_day:02d}T12:00:00Z"
+    # 1. Get natal chart first
+    natal_payload = _birth_payload(name, birth_year, birth_month, birth_day, birth_hour, birth_minute, 
+                                   latitude, longitude, timezone, house_system, "TROPICAL", "LAHIRI")
+    natal_response = await _post("/natal/chart", natal_payload)
+    if natal_response.get("meta", {}).get("status") != "success":
+        return natal_response
+
+    # 2. Extract data and call progressions
+    payload = {
+        "natal": natal_response.get("data", {}),
+        "options": natal_payload["options"],
+        "transit_date": f"{transit_year:04d}-{transit_month:02d}-{transit_day:02d}T12:00:00Z"
+    }
     return await _post("/western/progressions", payload)
 
 @mcp.tool
@@ -324,8 +357,19 @@ async def get_current_transits(name: str, birth_year: int, birth_month: int, bir
                                birth_hour: int, birth_minute: int, latitude: float, longitude: float,
                                timezone: str) -> dict:
     """Get current planetary transits compared to a natal chart."""
-    return await _post("/transits/current", _transit_payload(name, birth_year, birth_month, birth_day,
-                       birth_hour, birth_minute, latitude, longitude, timezone))
+    # 1. Get natal chart
+    natal_payload = _birth_payload(name, birth_year, birth_month, birth_day, birth_hour, birth_minute, 
+                                   latitude, longitude, timezone)
+    natal_response = await _post("/natal/chart", natal_payload)
+    if natal_response.get("meta", {}).get("status") != "success":
+        return natal_response
+
+    # 2. Call current transits
+    payload = {
+        "natal": natal_response.get("data", {}),
+        "options": natal_payload["options"]
+    }
+    return await _post("/transits/current", payload)
 
 
 @mcp.tool
@@ -484,8 +528,18 @@ async def get_eclipse_impacts(name: str, birth_year: int, birth_month: int, birt
                               birth_hour: int, birth_minute: int, latitude: float, longitude: float,
                               timezone: str, year: int) -> dict:
     """Analyze all solar and lunar eclipses in a given year and detect tight orb impacts to the user's natal planets."""
-    payload = _transit_payload(name, birth_year, birth_month, birth_day, birth_hour, birth_minute, latitude, longitude, timezone)
-    payload["year"] = year
+    # 1. Get natal chart
+    natal_payload = _birth_payload(name, birth_year, birth_month, birth_day, birth_hour, birth_minute, 
+                                   latitude, longitude, timezone)
+    natal_response = await _post("/natal/chart", natal_payload)
+    if natal_response.get("meta", {}).get("status") != "success":
+        return natal_response
+
+    # 2. Call eclipse impacts
+    payload = {
+        "natal": natal_response.get("data", {}).get("birth_data", natal_payload["birth_data"]),
+        "year": year
+    }
     return await _post("/transits/eclipses/impacts", payload)
 
 

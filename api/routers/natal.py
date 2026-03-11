@@ -31,6 +31,7 @@ async def natal_chart(request: NatalChartRequest):
         orb_settings=opts.orb_settings.model_dump() if opts.orb_settings else None,
     )
     chart["name"] = bd.name
+    chart["birth_data"] = bd.model_dump()
     return chart
 
 

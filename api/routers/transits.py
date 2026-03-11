@@ -19,27 +19,40 @@ router = APIRouter(prefix="/transits", tags=["Transits"])
 
 @router.post("/current")
 async def current_transits(request: TransitRequest):
-    natal_jd = birth_data_to_jd(request.natal)
     transit_jd = get_current_jd()
     if request.transit_date:
         td = request.transit_date
         transit_jd = get_julian_day(td.year, td.month, td.day, td.hour, td.minute, td.second, "UTC")
+    
     opts = request.options
-    natal_pos = get_all_planet_positions(natal_jd, zodiac_type=opts.zodiac_type.value, ayanamsa=opts.ayanamsa.value)
+    
+    if isinstance(request.natal, dict) and "planets" in request.natal:
+        natal_pos = request.natal["planets"]
+    else:
+        natal_bd = request.natal if isinstance(request.natal, BirthData) else BirthData(**request.natal)
+        natal_jd = birth_data_to_jd(natal_bd)
+        natal_pos = get_all_planet_positions(natal_jd, zodiac_type=opts.zodiac_type.value, ayanamsa=opts.ayanamsa.value)
+        
     transit_pos = get_all_planet_positions(transit_jd, zodiac_type=opts.zodiac_type.value, ayanamsa=opts.ayanamsa.value)
-    return {"natal_positions": natal_pos, "transit_positions": transit_pos,
-            "transit_jd": transit_jd}
+    return {"natal_positions": natal_pos, "transit_positions": transit_pos, "transit_jd": transit_jd}
 
 
 @router.post("/aspects")
 async def transit_aspects(request: TransitRequest):
-    natal_jd = birth_data_to_jd(request.natal)
     transit_jd = get_current_jd()
     if request.transit_date:
         td = request.transit_date
         transit_jd = get_julian_day(td.year, td.month, td.day, td.hour, td.minute, td.second, "UTC")
+    
     opts = request.options
-    natal_pos = get_all_planet_positions(natal_jd, zodiac_type=opts.zodiac_type.value, ayanamsa=opts.ayanamsa.value)
+    
+    if isinstance(request.natal, dict) and "planets" in request.natal:
+        natal_pos = request.natal["planets"]
+    else:
+        natal_bd = request.natal if isinstance(request.natal, BirthData) else BirthData(**request.natal)
+        natal_jd = birth_data_to_jd(natal_bd)
+        natal_pos = get_all_planet_positions(natal_jd, zodiac_type=opts.zodiac_type.value, ayanamsa=opts.ayanamsa.value)
+        
     transit_pos = get_all_planet_positions(transit_jd, zodiac_type=opts.zodiac_type.value, ayanamsa=opts.ayanamsa.value)
     return get_transit_aspects(natal_pos, transit_pos)
 
@@ -195,10 +208,16 @@ async def current_positions():
 
 @router.post("/outer-planets")
 async def outer_planet_transits(request: TransitRequest):
-    natal_jd = birth_data_to_jd(request.natal)
     transit_jd = get_current_jd()
     opts = request.options
-    natal_pos = get_all_planet_positions(natal_jd, zodiac_type=opts.zodiac_type.value, ayanamsa=opts.ayanamsa.value)
+    
+    if isinstance(request.natal, dict) and "planets" in request.natal:
+        natal_pos = request.natal["planets"]
+    else:
+        natal_bd = request.natal if isinstance(request.natal, BirthData) else BirthData(**request.natal)
+        natal_jd = birth_data_to_jd(natal_bd)
+        natal_pos = get_all_planet_positions(natal_jd, zodiac_type=opts.zodiac_type.value, ayanamsa=opts.ayanamsa.value)
+        
     transit_pos = get_all_planet_positions(transit_jd, zodiac_type=opts.zodiac_type.value, ayanamsa=opts.ayanamsa.value)
     outer = {k: v for k, v in transit_pos.items() if k in ("jupiter", "saturn", "mean_node", "ketu")}
     aspects = get_transit_aspects(natal_pos, outer)
@@ -207,16 +226,24 @@ async def outer_planet_transits(request: TransitRequest):
 
 @router.post("/ashtakavarga-score")
 async def transit_ashtakavarga_score(request: TransitRequest):
-    natal_jd = birth_data_to_jd(request.natal)
     transit_jd = get_current_jd()
     if request.transit_date:
         td = request.transit_date
-        # td is a datetime, we need its components
         transit_jd = get_julian_day(td.year, td.month, td.day, td.hour, td.minute, td.second, "UTC")
+    
     opts = request.options
-    natal_pos = get_all_planet_positions(natal_jd, zodiac_type=opts.zodiac_type.value, ayanamsa=opts.ayanamsa.value)
     transit_pos = get_all_planet_positions(transit_jd, zodiac_type=opts.zodiac_type.value, ayanamsa=opts.ayanamsa.value)
-    houses = get_houses(natal_jd, request.natal.latitude, request.natal.longitude, opts.house_system.value, opts.zodiac_type.value, opts.ayanamsa.value)
+
+    # Handle pre-computed natal chart or raw birth data
+    if isinstance(request.natal, dict) and "planets" in request.natal and "houses" in request.natal:
+        natal_pos = request.natal["planets"]
+        houses = request.natal["houses"]
+    else:
+        # Fallback to birth data
+        natal_bd = request.natal if isinstance(request.natal, BirthData) else BirthData(**request.natal)
+        natal_jd = birth_data_to_jd(natal_bd)
+        natal_pos = get_all_planet_positions(natal_jd, zodiac_type=opts.zodiac_type.value, ayanamsa=opts.ayanamsa.value)
+        houses = get_houses(natal_jd, natal_bd.latitude, natal_bd.longitude, opts.house_system.value, opts.zodiac_type.value, opts.ayanamsa.value)
     
     from api.core.ashtakavarga import get_transit_scoring
     scores = get_transit_scoring(natal_pos, houses, transit_pos)

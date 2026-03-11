@@ -46,16 +46,27 @@ from api.core.charts import build_composite_chart
 
 @router.post("/progressions")
 async def western_secondary_progressions(request: TransitRequest):
-    natal_jd = birth_data_to_jd(request.natal)
-    bd = request.natal
     transit_jd = get_current_jd()
     if request.transit_date:
         td = request.transit_date
         transit_jd = get_julian_day(td.year, td.month, td.day, td.hour, td.minute, td.second, "UTC")
         
     opts = request.options
+    
+    if isinstance(request.natal, dict) and "julian_day" in request.natal and "birth_data" in request.natal:
+        natal_jd = request.natal["julian_day"]
+        bd = request.natal["birth_data"]
+        lat = bd["latitude"]
+        lon = bd["longitude"]
+    else:
+        # Fallback to birth data
+        natal_bd = request.natal if isinstance(request.natal, BirthData) else BirthData(**request.natal)
+        natal_jd = birth_data_to_jd(natal_bd)
+        lat = natal_bd.latitude
+        lon = natal_bd.longitude
+        
     return get_secondary_progressions(
-        natal_jd, transit_jd, bd.latitude, bd.longitude,
+        natal_jd, transit_jd, lat, lon,
         zodiac_type=opts.zodiac_type.value, ayanamsa=opts.ayanamsa.value,
         house_system=opts.house_system.value
     )

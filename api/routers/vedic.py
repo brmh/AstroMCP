@@ -109,12 +109,20 @@ async def vedic_lagna_lord(request: NatalChartRequest):
 
 @router.post("/gochar")
 async def vedic_gochar(request: TransitRequest):
-    natal_jd = birth_data_to_jd(request.natal)
-    transit_jd = get_julian_day(request.transit_date.year, request.transit_date.month, request.transit_date.day, 
-                                request.transit_date.hour, request.transit_date.minute, request.transit_date.second, "UTC") if request.transit_date else get_current_jd()
+    transit_jd = get_current_jd()
+    if request.transit_date:
+        td = request.transit_date
+        transit_jd = get_julian_day(td.year, td.month, td.day, td.hour, td.minute, td.second, "UTC")
     
     opts = request.options
-    natal_pos = get_all_planet_positions(natal_jd, zodiac_type=opts.zodiac_type.value, ayanamsa=opts.ayanamsa.value)
+    
+    if isinstance(request.natal, dict) and "planets" in request.natal:
+        natal_pos = request.natal["planets"]
+    else:
+        natal_bd = request.natal if isinstance(request.natal, BirthData) else BirthData(**request.natal)
+        natal_jd = birth_data_to_jd(natal_bd)
+        natal_pos = get_all_planet_positions(natal_jd, zodiac_type=opts.zodiac_type.value, ayanamsa=opts.ayanamsa.value)
+        
     transit_pos = get_all_planet_positions(transit_jd, zodiac_type=opts.zodiac_type.value, ayanamsa=opts.ayanamsa.value)
     
     return analyze_gochar(natal_pos, transit_pos)

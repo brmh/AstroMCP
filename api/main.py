@@ -103,6 +103,7 @@ async def general_handler(request: Request, exc: Exception):
 # ── Include Routers ──────────────────────────────────────────────────────
 from api.routers import natal, vedic, transits, synastry, panchang as panchang_router
 from api.routers import muhurta as muhurta_router, timing, western, fixed_stars, utilities
+from api.routers import charts as charts_router
 
 app.include_router(natal.router)
 app.include_router(vedic.router)
@@ -114,6 +115,7 @@ app.include_router(timing.router)
 app.include_router(western.router)
 app.include_router(fixed_stars.router)
 app.include_router(utilities.router)
+app.include_router(charts_router.router)
 
 # ── Mount FastMCP for SSE (ChatGPT, Remote Clients) ──────────────────────
 # This exposes /mcp/sse and /mcp/messages endpoints for ChatGPT to consume

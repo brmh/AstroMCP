@@ -17,6 +17,30 @@
 
 ---
 
+## 🖼 Chart SVG (`/charts`) — NEW
+
+| Method | Endpoint | Description | Response Type |
+|--------|----------|-------------|---------------|
+| `POST` | `/charts/north-indian` | North Indian Diamond D1 Kundli chart | `image/svg+xml` |
+| `POST` | `/charts/south-indian` | South Indian Square D1 Kundli chart | `image/svg+xml` |
+| `POST` | `/charts/north-indian/varga/{division}` | North Indian style for any Varga chart (D1–D60) | `image/svg+xml` |
+| `POST` | `/charts/south-indian/varga/{division}` | South Indian style for any Varga chart (D1–D60) | `image/svg+xml` |
+
+**Query Parameters (all 4 endpoints):**
+- `theme` — `dark` (default) or `light`
+- `size` — integer 200–800 (default 400), canvas width/height in px
+
+**Usage Example:**
+```
+POST https://ciirag-jyotishmcp.hf.space/charts/north-indian?theme=dark&size=400
+Body: { "birth_data": { ... } }
+→ Returns SVG string directly embeddable as <img src="data:image/svg+xml,...">
+```
+
+**Common Varga divisions:** `9` (Navamsa), `10` (Dasamsa), `12` (Dwadasamsa), `3` (Drekkana), `7` (Saptamsa), `60` (Shashtiamsa)
+
+---
+
 ## 🌟 Natal Chart (`/natal`)
 
 | Method | Endpoint | Description |

@@ -670,18 +670,170 @@ def get_house_aspect_summary(planet_positions: Dict[str, int],
 # MASTER FUNCTION: Complete Aspect Analysis
 # ═══════════════════════════════════════════════════════════════════════════
 
+def _longitude_to_sign(lon: float) -> str:
+    """Convert a sidereal longitude (0-360) to its zodiac sign name."""
+    idx = int(lon / 30) % 12
+    return ZODIAC_SIGNS[idx]
+
+
 def compute_full_aspects(chart_data: Dict) -> Dict[str, Any]:
     """
-    Master function: takes a Kundli chart (from /vedic/kundli) and returns
+    Master function: takes a Kundli chart (from build_natal_chart) and returns
     a complete Drishti analysis covering all three systems.
 
-    Expected chart_data keys:
-      - planets: {sun: {sign, house, full_degree, ...}, ...}
-      - ascendant: {sign, ...}
+    Compatible with actual build_natal_chart output:
+      chart_data.planets  → {sun: {longitude, house, sign, ...}, ...}
+      chart_data.houses   → {ascendant: <float longitude>, ...}
     """
     planets_raw = chart_data.get("planets", {})
-    ascendant = chart_data.get("ascendant", {})
-    lagna_sign = ascendant.get("sign", "Aries")
+    houses_data = chart_data.get("houses", {})
+
+    # Derive Lagna sign from ascendant longitude
+    asc_lon = houses_data.get("ascendant")
+    if isinstance(asc_lon, (int, float)):
+        lagna_sign = _longitude_to_sign(float(asc_lon))
+    elif isinstance(asc_lon, dict):
+        lagna_sign = asc_lon.get("sign", "Aries")
+    else:
+        # Fallback: use house 1 sign from planet in house 1
+        lagna_sign = "Aries"
+
+    # Build lookup dicts, normalising planet names
+    planet_positions = {}  # planet → house number
+    planet_signs = {}      # planet → sign name
+    planet_longitudes = {} # planet → sidereal longitude
+
+    for name, data in planets_raw.items():
+        p = normalize_planet_name(name)
+        # Only include planets we have Drishti rules for
+        if p not in GRAHA_DRISHTI:
+            continue
+        if not isinstance(data, dict):
+            continue
+
+        h = data.get("house")
+        lon = data.get("longitude") or data.get("full_degree") or data.get("sidereal_degree", 0)
+        sign = data.get("sign")
+        if not sign and lon is not None:
+            sign = _longitude_to_sign(float(lon))
+        if h is None and sign:
+            h = house_from_sign(sign, lagna_sign)
+        if h is None:
+            continue
+
+        planet_positions[p] = int(h)
+        planet_signs[p] = sign or sign_from_house(int(h), lagna_sign)
+        planet_longitudes[p] = float(lon) if lon else 0.0
+
+    if not planet_positions:
+        return {"error": "No planet positions found in chart data",
+                "chart_keys": list(chart_data.keys()),
+                "planet_count": len(planets_raw)}
+
+    # ── Compute all systems ──
+    graha_aspects = get_all_aspects_in_chart(planet_positions, lagna_sign)
+    rashi_aspects = get_all_rashi_drishti(planet_signs, lagna_sign)
+    sphuta_aspects = calculate_all_sphuta_drishti(planet_longitudes) if planet_longitudes else []
+    conjunctions = find_conjunctions(planet_positions, planet_longitudes, lagna_sign)
+    mutual_aspects = find_mutual_aspects(planet_positions, lagna_sign)
+    drik_bala = calculate_drik_bala(planet_longitudes) if planet_longitudes else {}
+    house_summary = get_house_aspect_summary(planet_positions, lagna_sign)
+
+    # ── Planet-by-planet aspect detail ──
+    planet_aspect_details = {}
+    for p in planet_positions:
+        aspects_cast = get_graha_drishti(p, planet_positions[p], lagna_sign)
+        aspects_received = get_aspects_on_planet(p, planet_positions, lagna_sign)
+
+        for asp in aspects_cast:
+            asp["planets_in_target"] = [
+                pn for pn, ph in planet_positions.items()
+                if ph == asp["aspected_house"] and pn != p
+            ]
+            asp["house_themes"] = HOUSE_THEMES.get(asp["aspected_house"], "")
+
+        planet_aspect_details[p] = {
+            "house": planet_positions[p],
+            "sign": planet_signs.get(p, ""),
+            "longitude": round(planet_longitudes.get(p, 0), 4),
+            "nature": get_aspect_nature(p),
+            "significations": PLANET_SIGNIFICATIONS.get(p, {}).get("themes", ""),
+            "aspects_cast": aspects_cast,
+            "aspects_cast_count": len(aspects_cast),
+            "aspects_received": aspects_received,
+            "aspects_received_count": len(aspects_received),
+            "drik_bala": drik_bala.get(p, {}),
+        }
+
+    # ── Statistics ──
+    total_aspects = len(graha_aspects)
+    total_benefic = sum(1 for a in graha_aspects if a["nature"] == "benefic")
+    total_malefic = sum(1 for a in graha_aspects if a["nature"] in ("malefic", "mild_malefic"))
+
+    # ── Yogakaraka check ──
+    yk = YOGAKARAKAS.get(lagna_sign)
+    yogakaraka_info = None
+    if yk and yk in planet_positions:
+        yk_aspects = get_graha_drishti(yk, planet_positions[yk], lagna_sign)
+        yogakaraka_info = {
+            "planet": yk,
+            "house": planet_positions[yk],
+            "sign": planet_signs.get(yk, ""),
+            "aspects": yk_aspects,
+            "significance": (
+                f"{yk.capitalize()} is the Yogakaraka for {lagna_sign} Lagna — "
+                f"its aspects are extremely powerful benefic influences."
+            )
+        }
+
+    return {
+        "lagna": lagna_sign,
+        "system_1_graha_drishti": {
+            "description": "Planetary Aspects (Parashari) — BPHS Ch.9",
+            "total_aspects": total_aspects,
+            "benefic_aspects": total_benefic,
+            "malefic_aspects": total_malefic,
+            "aspects": graha_aspects,
+        },
+        "system_2_sphuta_drishti": {
+            "description": "Degree-Based Aspect Strength — BPHS Ch.28",
+            "unit": "Virupas (0-60, where 60 = 1 Rupa = Full Aspect)",
+            "aspects": sphuta_aspects[:30],
+        },
+        "system_3_rashi_drishti": {
+            "description": "Sign Aspects (Jaimini) — Always full & mutual",
+            "total_sign_aspects": len(rashi_aspects),
+            "aspects": rashi_aspects,
+        },
+        "conjunctions": {
+            "description": "Planets in same house (Yuti/Samagama)",
+            "count": len(conjunctions),
+            "groups": conjunctions,
+        },
+        "mutual_aspects": {
+            "description": "Planets aspecting each other simultaneously (Paraspar Drishti)",
+            "count": len(mutual_aspects),
+            "pairs": mutual_aspects,
+        },
+        "drik_bala": {
+            "description": "Aspectual Strength in Shadbala — BPHS Ch.27 v19",
+            "planets": drik_bala,
+        },
+        "house_summary": {
+            "description": "Aspect influence on all 12 houses",
+            "houses": house_summary,
+        },
+        "planet_details": planet_aspect_details,
+        "yogakaraka": yogakaraka_info,
+        "meta": {
+            "graha_drishti_rules": {
+                p: offsets for p, offsets in GRAHA_DRISHTI.items()
+            },
+            "rahu_ketu_config": "Rahu: Jupiter-like (5th, 7th, 9th). Ketu: 7th only.",
+            "reference": "BPHS (Brihat Parashara Hora Shastra), Phaladeepika, Uttara Kalamrita",
+        },
+    }
+
 
     # Build lookup dicts
     planet_positions = {}  # planet → house number

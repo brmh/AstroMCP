@@ -735,6 +735,14 @@ async def get_pro_analysis(name: str, birth_year: int, birth_month: int, birth_d
     • Panchang for current date
     • Eclipse Impacts analysis
     • Retrograde Calendar
+    • VEDIC DRISHTI (All Active Aspects):
+        - Graha Drishti: all 9 planets with special aspects (BPHS Ch.9)
+        - Sphuta Drishti: exact Virupas (0-60) strength per BPHS Ch.28
+        - Rashi Drishti: Jaimini sign aspects (full & mutual)
+        - Conjunctions (Yuti) with combustion detection
+        - Mutual aspects (Paraspar Drishti)
+        - Drik Bala (aspectual Shadbala component, BPHS 27.19)
+        - 12-house net benefic/malefic aspect balance
     • Partnership/Synastry analysis (if partner data provided)
     
     This is the ultimate comprehensive astrological consultation tool."""
@@ -772,7 +780,8 @@ async def get_pro_analysis(name: str, birth_year: int, birth_month: int, birth_d
         fetch_section("karakamsa", _post, "/vedic/karakamsa", vedic_payload),
         fetch_section("sade_sati", _post, "/vedic/sade-sati", vedic_payload),
         fetch_section("upagrahas", _post, "/vedic/upagrahas", vedic_payload),
-        fetch_section("arabic_parts", _post, "/natal/arabic-parts", _birth_payload(name, birth_year, birth_month, birth_day, birth_hour, birth_minute, latitude, longitude, timezone))
+        fetch_section("arabic_parts", _post, "/natal/arabic-parts", _birth_payload(name, birth_year, birth_month, birth_day, birth_hour, birth_minute, latitude, longitude, timezone)),
+        fetch_section("vedic_drishti", _post, "/vedic/aspects", vedic_payload),
     ]
 
     results = await asyncio.gather(*tasks)
